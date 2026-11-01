@@ -1,7 +1,7 @@
 (function () {
 // Scene-linear color grading and lens bloom, composed in the existing final render pass.
 const { THREE } = window.CITY;
-const { Fn, uniform, renderGroup, float, vec2, vec3, vec4, dot, mix, min, max, pow, smoothstep, length, screenUV, screenSize } = window.CITY.TSL;
+const { Fn, uniform, renderGroup, float, vec2, vec3, vec4, dot, mix, min, max, pow, smoothstep, length, screenUV, screenSize, fract, sin, time } = window.CITY.TSL;
 const { bloom } = window.CITY.PostFX;
 
 // Exposure and white balance belong to the camera, independently of the physical lighting presets.
@@ -25,6 +25,10 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
   const contrast = uniform(1.0).setGroup(renderGroup);
   const saturation = uniform(1.0).setGroup(renderGroup);
   const balance = uniform(new THREE.Vector3(1, 1, 1)).setGroup(renderGroup);
+  // GTAVisualPreset: a grade on the finished image. 1 is the amber/teal look, 0 is the original grade.
+  let gtaOn = true;
+  try { if (localStorage.getItem('gta6-look') === 'original') gtaOn = false; } catch (e) { /* private mode */ }
+  const gta = uniform(gtaOn ? 1 : 0).setGroup(renderGroup);
   const exposed = max(reflections ? sceneColor.rgb.add(reflections.rgb) : sceneColor.rgb, vec3(0)).mul(exposure).mul(balance);
 
   // Limit only bloom's peak radiance, scaling RGB together to retain neon and lamp colors.
@@ -47,7 +51,7 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
     color.mulAssign(shadows.mul(highlights));
 
     // Contrast pivots around middle gray and scales RGB together, avoiding per-channel gamma shifts.
-    color.mulAssign(pow(max(luma, 0.0001).div(0.18), contrast.sub(1.0)));
+    color.mulAssign(pow(max(luma, 0.0001).div(0.18), contrast.add(gta.mul(0.08)).sub(1.0)));
     const gray = dot(color, vec3(0.2126, 0.7152, 0.0722));
     const chroma = max(max(color.r, color.g), color.b).sub(min(min(color.r, color.g), color.b));
     const vibrance = float(0.10).mul(float(1).sub(chroma.div(max(max(max(color.r, color.g), color.b), 0.0001))));
@@ -56,8 +60,17 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
     // Normalize by the corner radius so the lens falloff remains subtle in portrait and landscape.
     const aspect = screenSize.x.div(screenSize.y);
     const radius = length(screenUV.sub(0.5).mul(vec2(aspect, 1))).div(length(vec2(aspect, 1).mul(0.5)));
-    const vignette = float(1).sub(smoothstep(0.35, 1.0, radius).mul(0.12));
-    return vec4(color.mul(vignette), 1.0);
+    const vignette = float(1).sub(smoothstep(0.35, 1.0, radius).mul(mix(float(0.12), float(0.22), gta)));
+
+    // Amber highlights, teal shadows, a little less chroma, a light grain. Mixed by the debug toggle.
+    const split = mix(vec3(0.86, 0.97, 1.08), vec3(1.1, 1.02, 0.88), smoothstep(0.05, 0.8, luma));
+    const tinted = color.mul(split).toVar();
+    const tintLuma = dot(tinted, vec3(0.2126, 0.7152, 0.0722));
+    const muted = mix(vec3(tintLuma), tinted, float(0.86));
+    const grainUv = screenUV.mul(screenSize).add(vec2(time.mul(17.0), time.mul(9.0)));
+    const grain = fract(sin(dot(grainUv, vec2(12.9898, 78.233))).mul(43758.5453)).sub(0.5).mul(0.028);
+    const graded = muted.add(grain);
+    return vec4(mix(color, graded, gta).mul(vignette), 1.0);
   })();
 
   // A preset's look, or (the live sky, lighting.js applyLive) the presets' looks blended by `weights` with the weather's
@@ -80,8 +93,28 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
     }
   }
 
+  function setGtaLook(on) {
+    gtaOn = !!on;
+    gta.value = gtaOn ? 1 : 0;
+    try { localStorage.setItem('gta6-look', gtaOn ? 'gta' : 'original'); } catch (e) { /* private mode */ }
+    const btn = document.getElementById('btn-gta-look');
+    if (btn) {
+      btn.setAttribute('aria-pressed', String(gtaOn));
+      btn.classList.toggle('active', gtaOn);
+      btn.textContent = gtaOn ? 'GTA look' : 'Original look';
+    }
+  }
+  const GTAVisualPreset = {
+    id: 'gta-golden',
+    get enabled() { return gtaOn; },
+    set: setGtaLook,
+    toggle() { setGtaLook(!gtaOn); }
+  };
+
   applyPreset('golden');
-  return { outputNode, bloomPass, applyPreset, exposure, contrast, saturation, balance };
+  setGtaLook(gtaOn);
+  window.CITY.GTAVisualPreset = GTAVisualPreset;
+  return { outputNode, bloomPass, applyPreset, exposure, contrast, saturation, balance, GTAVisualPreset };
 }
 
 Object.assign(window.CITY, { createPostProcessing });

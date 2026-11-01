@@ -1560,7 +1560,13 @@ async function initApp() {
         markInit('gpu');
         console.log(`[init] ${initTimings.join(', ')}`);
         initTimings = null;
-        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        if (loadingOverlay) {
+          loadingOverlay.classList.add('is-ready');
+          const enter = document.getElementById('enter-the-6');
+          const autostart = navigator.webdriver === true || new URLSearchParams(location.search).has('autostart');
+          if (!enter || autostart) loadingOverlay.classList.add('hidden');
+          else enter.disabled = false;
+        }
         setLoadingProgress(1);
         window.__CITY_APP.ready = true;
         openDeepLink();
