@@ -15,7 +15,7 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     browser = await chromium.launch({ args: ['--disable-gpu', '--disable-software-rasterizer'] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     page.setDefaultTimeout(2500);
-    await page.setContent(`<!doctype html><style>${phoneCss}</style><button id="btn-phone" type="button"></button>
+    await page.setContent(`<!doctype html><style>*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 20% 15%,#849b84,#263a3a 54%,#101b20)}${phoneCss}</style><button id="btn-phone" type="button"></button>
       <div class="hud-top-left"><div id="search-box"></div><div id="search-results"></div></div>
       <button id="btn-settings" type="button">settings</button>
       <div id="settings-panel" class="panel settings-panel" hidden><div class="toolbar"><button class="time-btn">Midday</button><button id="btn-open-map" class="tool-btn">Map</button></div><div id="camera-switch">Camera</div></div>
@@ -43,20 +43,21 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
 
     await page.keyboard.press('ArrowUp');
     await page.locator('.phone-overlay.is-open').waitFor();
+    if (process.env.PHONE_PREVIEW_PATH) { await page.waitForTimeout(450); await page.screenshot({ path: process.env.PHONE_PREVIEW_PATH }); }
     assert.equal(await page.evaluate(() => CITY.uiOverlay), 'phone');
-    await page.getByRole('button', { name: /Garage/ }).click();
+    await page.locator('.phone-app-icon[data-app="garage"]').click();
     await page.locator('.garage-option').filter({ hasText: 'Car' }).click();
     assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'car');
     assert.equal(await page.evaluate(() => CITY.uiOverlay), null, 'successful mode switch closes the phone');
 
     await page.locator('#btn-phone').click();
-    await page.getByRole('button', { name: /Garage/ }).click();
+    await page.locator('.phone-app-icon[data-app="garage"]').click();
     await page.locator('.garage-option').filter({ hasText: 'Helicopter' }).click();
     assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'helicopter');
     assert.equal(await page.evaluate(() => CITY.uiOverlay), null);
 
     await page.locator('#btn-phone').click();
-    await page.getByRole('button', { name: /Teleport/ }).click();
+    await page.locator('.phone-app-icon[data-app="teleport"]').click();
     const search = page.getByRole('searchbox', { name: 'Search Toronto destinations' });
     await search.fill('unlisted moon base');
     await page.getByText(/No matches in the city map/).waitFor();
@@ -80,7 +81,7 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.keyboard.press('ArrowUp');
     await page.locator('.phone-app-icon[data-app="settings"]').click();
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), false);
-    await page.locator('.phone-home-bar').click();
+    await page.locator('.phone-nav-home').click();
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), true, 'settings panel hides when leaving its app');
     await page.setViewportSize({ width: 390, height: 844 });
     const bounds = await page.locator('.phone-device').boundingBox();
