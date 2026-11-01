@@ -1,0 +1,292 @@
+{
+  "package.json": {
+    "mtime": 1793555227.5874574,
+    "ast_hash": "4a2d76b8b986db2526ec81cd3b3d57b8",
+    "semantic_hash": ""
+  },
+  "public/data/buildings.json": {
+    "mtime": 1793558974.434964,
+    "ast_hash": "94e202f180f1060c1dc84882998d694d",
+    "semantic_hash": ""
+  },
+  "public/data/manifest.json": {
+    "mtime": 1793558974.4400642,
+    "ast_hash": "044cc4aff2908b2de4cb60f02a69b7fd",
+    "semantic_hash": ""
+  },
+  "public/data/roads.json": {
+    "mtime": 1793558974.439841,
+    "ast_hash": "8e35c981f92d279c42a6c4c01e4330d1",
+    "semantic_hash": ""
+  },
+  "scripts/categorize.py": {
+    "mtime": 1793558424.5394204,
+    "ast_hash": "a3807a2b329bafbfa3480176cb17f108",
+    "semantic_hash": ""
+  },
+  "scripts/config.py": {
+    "mtime": 1793555029.6650567,
+    "ast_hash": "951aaa54b2162d23b43aecdf4c679af5",
+    "semantic_hash": ""
+  },
+  "scripts/download_data.py": {
+    "mtime": 1793554090.3435066,
+    "ast_hash": "ce1d36042f64819eb3774fdbe29622b8",
+    "semantic_hash": ""
+  },
+  "scripts/fetch_osm_buildings.py": {
+    "mtime": 1793558382.324339,
+    "ast_hash": "49f46a391b3ff5b0cadd7a118114ca30",
+    "semantic_hash": ""
+  },
+  "scripts/process_data.py": {
+    "mtime": 1793558487.466478,
+    "ast_hash": "0f598515834b07c4cbcb78f6b0869f08",
+    "semantic_hash": ""
+  },
+  "scripts/verify_aerial.mjs": {
+    "mtime": 1793554783.2220821,
+    "ast_hash": "a7a943fbd55aa9686198b3cffa17cda4",
+    "semantic_hash": ""
+  },
+  "scripts/verify_browser.mjs": {
+    "mtime": 1793554706.5987194,
+    "ast_hash": "c51ac92a763ca584e653043412dbc61f",
+    "semantic_hash": ""
+  },
+  "scripts/verify_functional.mjs": {
+    "mtime": 1793555097.5019982,
+    "ast_hash": "b3147719481da9179c0bead4976d897e",
+    "semantic_hash": ""
+  },
+  "scripts/verify_walk.mjs": {
+    "mtime": 1793555130.0594683,
+    "ast_hash": "92913081ef83763615b98e44eb2b92bb",
+    "semantic_hash": ""
+  },
+  "src/assets.ts": {
+    "mtime": 1793554310.5295851,
+    "ast_hash": "ad5a98e492569385c4aeb117e94d1865",
+    "semantic_hash": ""
+  },
+  "src/buildings.ts": {
+    "mtime": 1793558513.664714,
+    "ast_hash": "6709729de2a01472bad8c9f39e7f35f4",
+    "semantic_hash": ""
+  },
+  "src/collision.ts": {
+    "mtime": 1793554396.2024949,
+    "ast_hash": "9f74d346ca7ea61c51db386e2aab757d",
+    "semantic_hash": ""
+  },
+  "src/environment.ts": {
+    "mtime": 1793558072.3609102,
+    "ast_hash": "5f602439fd7ec8b995373abc54baf2ba",
+    "semantic_hash": ""
+  },
+  "src/flyCamera.ts": {
+    "mtime": 1793554587.2608926,
+    "ast_hash": "2033b9337542afa250c8601534a9aba8",
+    "semantic_hash": ""
+  },
+  "src/hud.ts": {
+    "mtime": 1793556229.1058857,
+    "ast_hash": "d76b8faf9b2331193ef555b6e169aa66",
+    "semantic_hash": ""
+  },
+  "src/input.ts": {
+    "mtime": 1793555511.0310478,
+    "ast_hash": "53d42f05c9a68a94cce48d3afaa9b193",
+    "semantic_hash": ""
+  },
+  "src/inspector.ts": {
+    "mtime": 1793558837.4627492,
+    "ast_hash": "e789b92b1a624734a967b63356427079",
+    "semantic_hash": ""
+  },
+  "src/landmarks/cnTower.ts": {
+    "mtime": 1793557061.7253447,
+    "ast_hash": "f7fb9e503274b573b788fac1916aa6ea",
+    "semantic_hash": ""
+  },
+  "src/landmarks/debug.ts": {
+    "mtime": 1793557307.0929759,
+    "ast_hash": "ebdfc3d7c4cff4afc4b51cc8aa957e6d",
+    "semantic_hash": ""
+  },
+  "src/landmarks/index.ts": {
+    "mtime": 1793557202.4378219,
+    "ast_hash": "0e1c3c27371bf98c9f394e5f473c406c",
+    "semantic_hash": ""
+  },
+  "src/landmarks/rogersCentre.ts": {
+    "mtime": 1793557112.907225,
+    "ast_hash": "4adfab785e246975bab47df321a50ff9",
+    "semantic_hash": ""
+  },
+  "src/landmarks/types.ts": {
+    "mtime": 1793557006.1014147,
+    "ast_hash": "90ded99b89a21cb8215aea2f05f32aba",
+    "semantic_hash": ""
+  },
+  "src/landmarks/unionStation.ts": {
+    "mtime": 1793557147.8491595,
+    "ast_hash": "4a8e666633b08167be65869d55a65ff1",
+    "semantic_hash": ""
+  },
+  "src/landmarks/util.ts": {
+    "mtime": 1793557022.0883365,
+    "ast_hash": "995ca63363f1ee42f9c18cb5b50404f0",
+    "semantic_hash": ""
+  },
+  "src/main.ts": {
+    "mtime": 1793558803.8996255,
+    "ast_hash": "96eb0bee822bd2c4e5ad635ea9f46c97",
+    "semantic_hash": ""
+  },
+  "src/materials/facade.ts": {
+    "mtime": 1793558882.5918357,
+    "ast_hash": "38aee445b1b35c5e8443c948cf46681c",
+    "semantic_hash": ""
+  },
+  "src/player.ts": {
+    "mtime": 1793554575.5682542,
+    "ast_hash": "5efcdbfeff73828a91697f689bfd66f6",
+    "semantic_hash": ""
+  },
+  "src/postprocessing.ts": {
+    "mtime": 1793556561.3248172,
+    "ast_hash": "816d03bb579362e48acd2891cabc32c0",
+    "semantic_hash": ""
+  },
+  "src/projection.ts": {
+    "mtime": 1793558653.799078,
+    "ast_hash": "6ac420c8627a834f2b873e57fb9aaf4b",
+    "semantic_hash": ""
+  },
+  "src/roads.ts": {
+    "mtime": 1793558897.4933708,
+    "ast_hash": "85325bc8b63cf8dac7e5f4a067e1f52d",
+    "semantic_hash": ""
+  },
+  "src/sky.ts": {
+    "mtime": 1793556449.1210063,
+    "ast_hash": "cbd8fee045550d6f95f0f74296a61e2a",
+    "semantic_hash": ""
+  },
+  "src/streetView.ts": {
+    "mtime": 1793558900.222892,
+    "ast_hash": "aa55e900352b148e4a6d452abe2df2ba",
+    "semantic_hash": ""
+  },
+  "src/textures.ts": {
+    "mtime": 1793558895.6849878,
+    "ast_hash": "769e60fdc38f7624bcb438be8369510a",
+    "semantic_hash": ""
+  },
+  "src/types.ts": {
+    "mtime": 1793559179.3787808,
+    "ast_hash": "73e27a7d8e0221427767ae06462367f2",
+    "semantic_hash": ""
+  },
+  "src/vite-env.d.ts": {
+    "mtime": 1793554657.0325046,
+    "ast_hash": "0352474ba2918efe13895edbc3780d94",
+    "semantic_hash": ""
+  },
+  "src/water.ts": {
+    "mtime": 1793556149.23673,
+    "ast_hash": "6901bbe1d7da7eab04fbcc0c3076252d",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1793553951.1475246,
+    "ast_hash": "da359caee614640286aea0b4a2ce81f5",
+    "semantic_hash": ""
+  },
+  "vite.config.ts": {
+    "mtime": 1793553953.615691,
+    "ast_hash": "76f7554feee3d9c93fd1816fb5b297d6",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1793558983.1378756,
+    "ast_hash": "2b3f57f4883dc706b44ded42a57b243c",
+    "semantic_hash": ""
+  },
+  "data/ATTRIBUTION.md": {
+    "mtime": 1793558858.554653,
+    "ast_hash": "3d8ef5e69a0c66ee6d19b4d9814ac717",
+    "semantic_hash": ""
+  },
+  "data/LANDMARK_SOURCES.md": {
+    "mtime": 1793557589.0908186,
+    "ast_hash": "b3e56b54c2ed92d657b2c6823bc75d10",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1793558835.6852787,
+    "ast_hash": "990f25b07ebe10616f9146d01ef79520",
+    "semantic_hash": ""
+  },
+  "scripts/requirements.txt": {
+    "mtime": 1793555222.5318139,
+    "ast_hash": "b0f46572d91dd5c3f2df907eb170c1b2",
+    "semantic_hash": ""
+  },
+  "docs/birdseye.png": {
+    "mtime": 1793555295.5698395,
+    "ast_hash": "b2e95b4625646952af5c092792df4f58",
+    "semantic_hash": ""
+  },
+  "public/textures/asphalt-color.jpg": {
+    "mtime": 1793558772.875501,
+    "ast_hash": "b1bb165771def14493e75b70c470a6c8",
+    "semantic_hash": ""
+  },
+  "public/textures/asphalt-normal.jpg": {
+    "mtime": 1793558772.894923,
+    "ast_hash": "3515c0e8106353009536171514f47ab7",
+    "semantic_hash": ""
+  },
+  "public/textures/asphalt-roughness.jpg": {
+    "mtime": 1793558772.8990235,
+    "ast_hash": "8a3b7ae2bcc7e7a1b8895791e8ec51bb",
+    "semantic_hash": ""
+  },
+  "public/textures/brick-color.jpg": {
+    "mtime": 1793558772.9275343,
+    "ast_hash": "f53c4420daaf2f904590cf7c9052a523",
+    "semantic_hash": ""
+  },
+  "public/textures/brick-normal.jpg": {
+    "mtime": 1793558772.940876,
+    "ast_hash": "c2cea092a3b81dadd2d43c0bcbd5aade",
+    "semantic_hash": ""
+  },
+  "public/textures/brick-roughness.jpg": {
+    "mtime": 1793558772.9435167,
+    "ast_hash": "9ad451328fd7c41c7c20cc76d4691fc8",
+    "semantic_hash": ""
+  },
+  "public/textures/concrete-color.jpg": {
+    "mtime": 1793558772.9052665,
+    "ast_hash": "20c8e5acca91cf7df35073a41761e49b",
+    "semantic_hash": ""
+  },
+  "public/textures/concrete-normal.jpg": {
+    "mtime": 1793558772.9138992,
+    "ast_hash": "ec2834a531a0b3320eddf1beb9899b2d",
+    "semantic_hash": ""
+  },
+  "public/textures/concrete-roughness.jpg": {
+    "mtime": 1793558772.9185898,
+    "ast_hash": "75dc921efe95d1968d844cf0a1005b66",
+    "semantic_hash": ""
+  },
+  "public/data/sources.json": {
+    "mtime": 1793558974.417804,
+    "ast_hash": "5b32dd1acbbdb1833faf2c13e82e92e9",
+    "semantic_hash": ""
+  }
+}

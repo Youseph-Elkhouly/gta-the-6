@@ -27,6 +27,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config  # noqa: E402
+import categorize as cat  # noqa: E402
 
 try:
     import shapefile  # pyshp
@@ -40,6 +41,11 @@ OUT_DIR = os.path.join(ROOT, "public", "data")
 
 BUILDINGS_DIR = os.path.join(RAW_DIR, "3dmassing_2025")
 ROADS_JSON = os.path.join(RAW_DIR, "osm_roads_raw.json")
+OSM_BUILDINGS_JSON = os.path.join(RAW_DIR, "osm_buildings_raw.json")
+
+# Max distance (m) to accept an OSM building centre as a match for a 3D Massing
+# building centroid (tag enrichment only; geometry always comes from 3D Massing).
+OSM_MATCH_RADIUS_M = 28.0
 
 # Spatial chunk edge length in metres. 175 m => a 4x4 grid across the 700 m area.
 # The browser groups geometry per chunk (fewer draw calls) and the HUD reports
@@ -90,6 +96,52 @@ def _signed_area(ring: list[tuple[float, float]]) -> float:
     return a * 0.5
 
 
+class OSMIndex:
+    """Nearest-centre lookup of OSM buildings (for tag enrichment)."""
+
+    def __init__(self):
+        self.cell = 40.0
+        self.buckets: dict[tuple[int, int], list] = {}
+        self.count = 0
+
+    def _key(self, x, z):
+        return (int(x // self.cell), int(z // self.cell))
+
+    def add(self, x, z, el):
+        self.buckets.setdefault(self._key(x, z), []).append((x, z, el))
+        self.count += 1
+
+    def match(self, x, z, radius):
+        best = None
+        best_d2 = radius * radius
+        cx, cz = int(x // self.cell), int(z // self.cell)
+        for dx in (-1, 0, 1):
+            for dz in (-1, 0, 1):
+                for (bx, bz, el) in self.buckets.get((cx + dx, cz + dz), ()):
+                    d2 = (bx - x) ** 2 + (bz - z) ** 2
+                    if d2 <= best_d2:
+                        best_d2 = d2
+                        best = el
+        return best
+
+
+def load_osm_index() -> OSMIndex:
+    idx = OSMIndex()
+    if not (os.path.exists(OSM_BUILDINGS_JSON) and os.path.getsize(OSM_BUILDINGS_JSON) > 100):
+        print("[osm-bldg] no OSM building cache — categorizing from height only.")
+        return idx
+    with open(OSM_BUILDINGS_JSON) as f:
+        data = json.load(f)
+    for el in data.get("elements", []):
+        c = el.get("center") or ({"lat": el.get("lat"), "lon": el.get("lon")} if el.get("lat") else None)
+        if not c or c.get("lat") is None:
+            continue
+        x, z = config.lonlat_to_local(c["lon"], c["lat"])
+        idx.add(x, z, el)
+    print(f"[osm-bldg] indexed {idx.count} OSM buildings for tag matching")
+    return idx
+
+
 def process_buildings() -> dict:
     shp_path = _find_shp(BUILDINGS_DIR)
     if not shp_path:
@@ -105,6 +157,9 @@ def process_buildings() -> dict:
     fields = [f[0] for f in reader.fields[1:]]
     idx = {name: i for i, name in enumerate(fields)}
 
+    osm_index = load_osm_index()
+    sources = []  # per-building provenance manifest
+    matched = 0
     buildings = []
     kept = 0
     scanned = 0
@@ -177,6 +232,18 @@ def process_buildings() -> dict:
         cx /= npts
         cz /= npts
 
+        # --- OSM tag match + architectural category ---
+        area = abs(_signed_area([(out_rings[0][i], out_rings[0][i + 1])
+                                 for i in range(0, len(out_rings[0]), 2)]))
+        osm_el = osm_index.match(cx, cz, OSM_MATCH_RADIUS_M)
+        tags = (osm_el.get("tags") or {}) if osm_el else {}
+        osm_id = (f"{osm_el.get('type')}/{osm_el.get('id')}" if osm_el else "")
+        name = tags.get("name", "")
+        levels = tags.get("building:levels", "")
+        category = cat.categorize(tags, h, area)
+        if osm_el:
+            matched += 1
+
         bid = f"tor3dm-{kept:05d}"
         buildings.append({
             "id": bid,
@@ -184,18 +251,47 @@ def process_buildings() -> dict:
             "b": round(base, 2),
             "hs": (rec[idx["HEIGHT_SRC"]].strip() if "HEIGHT_SRC" in idx else ""),
             "bs": (rec[idx["BLDG_SRC"]].strip() if "BLDG_SRC" in idx else ""),
+            "cat": category,
+            "catName": cat.category_name(category),
+            "osm": osm_id,
+            "name": name,
             "chunk": chunk_of(cx, cz),
             "rings": out_rings,
         })
+        sources.append({
+            "id": bid,
+            "geometry": "City of Toronto 3D Massing 2025",
+            "osm": osm_id,
+            "name": name,
+            "category": cat.category_name(category),
+            "levels": levels,
+            "tags": {k: tags[k] for k in ("building", "amenity", "shop", "office",
+                     "building:material", "start_date") if k in tags},
+        })
         kept += 1
 
-    print(f"[buildings] scanned {scanned} records, kept {kept} within the area")
+    print(f"[buildings] scanned {scanned} records, kept {kept} within the area; "
+          f"OSM-matched {matched}/{kept}")
+    # Persist the per-building source manifest.
+    with open(os.path.join(OUT_DIR, "sources.json"), "w") as f:
+        json.dump({
+            "note": "Per-building provenance. Geometry from City of Toronto 3D "
+                    "Massing; tags/category enriched from OpenStreetMap where matched.",
+            "licenses": {
+                "geometry": "Open Government Licence – Toronto",
+                "osm": "ODbL — © OpenStreetMap contributors",
+            },
+            "categories": cat.CATEGORIES,
+            "buildings": sources,
+        }, f, separators=(",", ":"))
+
     return {
         "meta": {
             "source": "City of Toronto Open Data — 3D Massing (2025 shapefile)",
             "sourceUrl": "https://open.toronto.ca/dataset/3d-massing/",
             "license": "Open Government Licence – Toronto",
             "crs": "local metres (equirectangular tangent plane)",
+            "categories": cat.CATEGORIES,
         },
         "buildings": buildings,
     }

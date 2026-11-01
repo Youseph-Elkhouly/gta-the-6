@@ -65,6 +65,14 @@ You spawn in the open plaza just south-east of the CN Tower, facing the skyline.
   towers all sit in their true positions, scale, and orientation).
 - **Real streets** — ~520 OpenStreetMap ways (roads, service lanes, footpaths)
   rendered as flat ribbons following the actual Toronto street geometry.
+- **Category-aware facades** — OSM building tags enrich the Toronto footprints
+  with architectural categories and names; height-based categories remain as the
+  fallback where no nearby OSM building matches.
+- **Street View comparison** — press **V** to open a developer panel at the
+  current world position, with a link to the corresponding Google Street View.
+- **Tiled PBR surfaces** — CC0 ambientCG asphalt and concrete color, normal, and
+  roughness maps detail roads and paths; concrete color textures the ground and
+  brick albedo adds facade detail.
 - Flat grey ground, dark-asphalt roads, lighter concrete footpaths.
 - A single shadow-casting "sun", soft hemisphere fill, gradient sky, and
   distance fog tuned to the play area.
@@ -164,8 +172,9 @@ scripts/
 | File | Contents |
 | --- | --- |
 | `manifest.json` | area bounds, spawn point, chunk size, counts, attribution |
-| `buildings.json` | `{ id, h, b, hs, bs, chunk, rings:[[x,z,…]] }` per building |
+| `buildings.json` | `{ id, h, b, hs, bs, cat, catName, osm, name, chunk, rings:[[x,z,…]] }` per building |
 | `roads.json` | `{ id, cls, width, name, chunk, pts:[x,z,…] }` per road |
+| `sources.json` | per-building geometry/tag provenance and license notes |
 
 Coordinate convention: **local metres, +x = east, +z = south, origin at the area
 centre.** World units are metres everywhere.

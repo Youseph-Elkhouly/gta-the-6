@@ -15,3 +15,14 @@ export function makeProjector(centerLat: number, centerLon: number): Projector {
     z: -(lat - centerLat) * mPerDegLat,
   });
 }
+
+export type InverseProjector = (x: number, z: number) => { lat: number; lon: number };
+
+export function makeInverseProjector(centerLat: number, centerLon: number): InverseProjector {
+  const mPerDegLat = (Math.PI / 180) * EARTH_R;
+  const mPerDegLon = (Math.PI / 180) * EARTH_R * Math.cos((centerLat * Math.PI) / 180);
+  return (x: number, z: number) => ({
+    lat: centerLat - z / mPerDegLat,
+    lon: centerLon + x / mPerDegLon,
+  });
+}

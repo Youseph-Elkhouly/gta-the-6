@@ -12,6 +12,7 @@ import { buildWater } from "./water";
 import { Graphics } from "./postprocessing";
 import { buildLandmarks } from "./landmarks/index";
 import { LandmarkDebug } from "./landmarks/debug";
+import { StreetViewPanel } from "./streetView";
 
 type CameraMode = "player" | "fly";
 
@@ -92,6 +93,8 @@ async function main() {
   fly.pitch = -0.6;
 
   let mode: CameraMode = "player";
+  const streetView = new StreetViewPanel(camera, manifest.area.centerLat, manifest.area.centerLon,
+    () => mode === "fly" ? fly.position : player.position);
 
   const crosshair = document.getElementById("crosshair")!;
   const input = new Input(renderer.domElement);
@@ -178,6 +181,7 @@ async function main() {
     }
 
     hud.tickFps(dt);
+    streetView.updatePosition();
     landmarkDebug.update(camera, window.innerWidth, window.innerHeight);
     lake.update(dt);
     graphics.render();

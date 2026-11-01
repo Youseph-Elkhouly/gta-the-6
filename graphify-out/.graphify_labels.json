@@ -1,0 +1,21 @@
+{
+  "0": "main.ts",
+  "1": "index.ts",
+  "2": "GTA: THE 6 — Phase 1: Toronto 3D World",
+  "3": "scripts",
+  "4": "buildings.ts",
+  "5": "roads.ts",
+  "6": "process_data.py",
+  "7": "compilerOptions",
+  "8": "manifest.json",
+  "9": "config.py",
+  "10": "StreetViewPanel",
+  "11": "Graphics",
+  "12": "LandmarkDebug",
+  "13": "verify_aerial.mjs",
+  "14": "verify_browser.mjs",
+  "15": "verify_walk.mjs",
+  "16": "verify_functional.mjs",
+  "17": "vite-env.d.ts",
+  "18": "vite.config.ts"
+}

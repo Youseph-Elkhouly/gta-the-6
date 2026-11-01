@@ -23,12 +23,16 @@ export interface BuildingFeature {
   b: number; // base / surface elevation MSL (metres) — metadata only in v1
   hs: string; // height source
   bs: string; // building source
+  cat?: number; // architectural category code (see BuildingsDoc.meta.categories)
+  catName?: string;
+  osm?: string; // matched OSM id, e.g. "way/123"
+  name?: string; // building name from OSM, when known
   chunk: [number, number];
   rings: number[][]; // each ring = flat [x,z,x,z,...] outer footprint
 }
 
 export interface BuildingsDoc {
-  meta: Record<string, string>;
+  meta: Record<string, unknown>;
   buildings: BuildingFeature[];
 }
 

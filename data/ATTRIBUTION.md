@@ -23,6 +23,15 @@ and processed into browser-ready assets under `public/data/`.
 - **Licence:** Open Database License (ODbL) — https://www.openstreetmap.org/copyright
 - **Attribution:** © OpenStreetMap contributors.
 
+## PBR surface textures — ambientCG
+
+- `Asphalt016`, `Concrete034`, and `Bricks075A` (1K JPG material maps) from
+  https://ambientcg.com/; licensed under CC0 1.0 Universal
+  (https://creativecommons.org/publicdomain/zero/1.0/).
+- The asphalt color, normal, and roughness maps are used on road ribbons. The
+  concrete color map is used on pedestrian paths and ground surfaces. The brick
+  maps are retained under `public/textures/` for facade material work.
+
 ## Playable area
 
 - ~700 m × 700 m square centred near the CN Tower (lat 43.6440, lon -79.3888),

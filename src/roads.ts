@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { RoadsDoc } from "./types";
-import { makeAsphaltTextures, makeConcreteTexture } from "./textures";
+import { makeAsphaltTextures, makeConcreteTextures } from "./textures";
 
 // Classes rendered as narrow light "paths" (sidewalks / cycleways) rather than
 // dark vehicular asphalt. These also get no centre-line markings.
@@ -10,11 +10,12 @@ const PATH_CLASSES = new Set(["footway", "path", "cycleway", "pedestrian", "trac
 const TILE_M = 7; // metres per texture tile along/across a road
 
 function asphaltMaterial(): THREE.MeshStandardMaterial {
-  const { map, normalMap } = makeAsphaltTextures();
+  const { map, normalMap, roughnessMap } = makeAsphaltTextures();
   return new THREE.MeshStandardMaterial({
-    color: 0x3a3d43,
+    color: 0xb5b5b5,
     map,
     normalMap,
+    roughnessMap,
     normalScale: new THREE.Vector2(0.6, 0.6),
     roughness: 0.95,
     metalness: 0.0,
@@ -26,11 +27,13 @@ function asphaltMaterial(): THREE.MeshStandardMaterial {
 }
 
 function pathMaterial(): THREE.MeshStandardMaterial {
-  const map = makeConcreteTexture();
-  map.repeat.set(1, 1);
+  const { map, normalMap, roughnessMap } = makeConcreteTextures();
   return new THREE.MeshStandardMaterial({
     color: 0x7a7e85,
     map,
+    normalMap,
+    roughnessMap,
+    normalScale: new THREE.Vector2(0.45, 0.45),
     roughness: 0.96,
     metalness: 0.0,
     envMapIntensity: 0.4,

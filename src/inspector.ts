@@ -13,6 +13,8 @@ export class Inspector {
   private elBase = document.getElementById("insp-base")!;
   private elHsrc = document.getElementById("insp-hsrc")!;
   private elBsrc = document.getElementById("insp-bsrc")!;
+  private elCategory = document.getElementById("insp-category")!;
+  private elOsm = document.getElementById("insp-osm")!;
   private elDataset = document.getElementById("insp-dataset")!;
 
   private highlight?: THREE.LineSegments;
@@ -69,6 +71,8 @@ export class Inspector {
     this.elBase.textContent = `${f.b.toFixed(1)} m MSL`;
     this.elHsrc.textContent = f.hs || "—";
     this.elBsrc.textContent = f.bs || "—";
+    this.elCategory.textContent = f.catName || "Height-based";
+    this.elOsm.textContent = f.name ? `${f.name} (${f.osm || "OSM"})` : (f.osm || "—");
     this.elDataset.textContent = "Toronto 3D Massing 2025";
     this.highlightBuilding(f);
   }

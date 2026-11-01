@@ -37,71 +37,37 @@ function speckle(
   }
 }
 
-// Derive a normal map from a greyscale height estimate of the albedo canvas.
-function normalFromCanvas(src: HTMLCanvasElement, strength: number): THREE.CanvasTexture {
-  const size = src.width;
-  const sctx = src.getContext("2d")!;
-  const img = sctx.getImageData(0, 0, size, size).data;
-  const lum = (x: number, y: number) => {
-    const xi = ((x % size) + size) % size;
-    const yi = ((y % size) + size) % size;
-    const i = (yi * size + xi) * 4;
-    return (img[i] * 0.299 + img[i + 1] * 0.587 + img[i + 2] * 0.114) / 255;
-  };
-  const [canvas, ctx] = makeCanvas(size);
-  const out = ctx.createImageData(size, size);
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = (lum(x - 1, y) - lum(x + 1, y)) * strength;
-      const dy = (lum(x, y - 1) - lum(x, y + 1)) * strength;
-      // normal = normalize(-dx, -dy, 1)
-      const nz = 1.0;
-      const len = Math.hypot(dx, dy, nz) || 1;
-      const i = (y * size + x) * 4;
-      out.data[i] = ((dx / len) * 0.5 + 0.5) * 255;
-      out.data[i + 1] = ((dy / len) * 0.5 + 0.5) * 255;
-      out.data[i + 2] = ((nz / len) * 0.5 + 0.5) * 255;
-      out.data[i + 3] = 255;
-    }
-  }
-  ctx.putImageData(out, 0, 0);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.colorSpace = THREE.NoColorSpace;
-  return tex;
+export interface SurfaceTextures {
+  map: THREE.Texture;
+  normalMap: THREE.Texture;
+  roughnessMap?: THREE.Texture;
 }
 
-export interface SurfaceTextures {
-  map: THREE.CanvasTexture;
-  normalMap: THREE.CanvasTexture;
+function loadTiledTexture(path: string, colorSpace = THREE.NoColorSpace): THREE.Texture {
+  const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}textures/${path}`);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = colorSpace;
+  return tex;
 }
 
 export function makeAsphaltTextures(): SurfaceTextures {
-  const size = 256;
-  const [canvas, ctx] = makeCanvas(size);
-  speckle(ctx, size, [34, 36, 40], 22, 9000);
-  // a few lighter aggregate flecks
-  for (let i = 0; i < 400; i++) {
-    ctx.fillStyle = `rgba(150,150,155,${0.05 + Math.random() * 0.1})`;
-    ctx.fillRect(Math.random() * size, Math.random() * size, 1, 1);
-  }
-  const map = new THREE.CanvasTexture(canvas);
-  map.wrapS = map.wrapT = THREE.RepeatWrapping;
-  map.colorSpace = THREE.SRGBColorSpace;
-  const normalMap = normalFromCanvas(canvas, 2.0);
-  return { map, normalMap };
+  return {
+    map: loadTiledTexture("asphalt-color.jpg", THREE.SRGBColorSpace),
+    normalMap: loadTiledTexture("asphalt-normal.jpg"),
+    roughnessMap: loadTiledTexture("asphalt-roughness.jpg"),
+  };
 }
 
-export function makeConcreteTexture(): THREE.CanvasTexture {
-  const size = 256;
-  const [canvas, ctx] = makeCanvas(size);
-  // Light warm concrete so it reads as pavement, not dark asphalt, when it
-  // multiplies the ground/sidewalk material colour.
-  speckle(ctx, size, [178, 172, 160], 14, 7000);
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.colorSpace = THREE.SRGBColorSpace;
-  return tex;
+export function makeConcreteTexture(): THREE.Texture {
+  return loadTiledTexture("concrete-color.jpg", THREE.SRGBColorSpace);
+}
+
+export function makeConcreteTextures(): SurfaceTextures {
+  return {
+    map: loadTiledTexture("concrete-color.jpg", THREE.SRGBColorSpace),
+    normalMap: loadTiledTexture("concrete-normal.jpg"),
+    roughnessMap: loadTiledTexture("concrete-roughness.jpg"),
+  };
 }
 
 // Smooth, swirly normal map for water ripples.

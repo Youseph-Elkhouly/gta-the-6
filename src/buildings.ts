@@ -103,14 +103,17 @@ export function buildBuildings(doc: BuildingsDoc, envMap: THREE.Texture, suppres
       const geo = extrudeRing(ring, b.h);
       if (!geo) continue;
 
-      // Per-vertex attributes for the facade shader (seed + building height).
+      // Per-vertex attributes for the facade shader (seed + height + category).
       const vcount = geo.attributes.position.count;
       const seeds = new Float32Array(vcount);
       const heights = new Float32Array(vcount);
+      const cats = new Float32Array(vcount);
       seeds.fill(seed);
       heights.fill(b.h);
+      cats.fill(b.cat ?? -1); // -1 => shader falls back to height heuristic
       geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
       geo.setAttribute("aHeight", new THREE.BufferAttribute(heights, 1));
+      geo.setAttribute("aCategory", new THREE.BufferAttribute(cats, 1));
 
       const tris = geo.attributes.position.count / 3;
       // running triangle offset within this chunk
