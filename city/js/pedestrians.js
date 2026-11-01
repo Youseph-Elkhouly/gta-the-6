@@ -798,19 +798,44 @@ function createPersonMaterial(pose, detail = 1) {
 
   const female = info.y;
   const lane = (salt) => fract(sin(info.x.add(salt).mul(12.9898)).mul(43758.5453));
-  const skinCol = vertexStage(pickColorFromPalette(SKIN_COLORS, lane(17.0))).toVar();
-  const hairCol = vertexStage(pickColorFromPalette(HAIR_COLORS, lane(3.0))).toVar();
-  const coatCol = vertexStage(
-    mix(pickColorFromPalette(COAT_COLORS, lane(29.0)), pickColorFromPalette(COAT_COLORS_F, lane(29.0)), female)
-  ).toVar();
-  const shirtCol = vertexStage(pickColorFromPalette(SHIRT_COLORS, lane(71.0))).toVar();
-  const legsCol = vertexStage(
-    mix(pickColorFromPalette(LEG_COLORS, lane(47.0)), pickColorFromPalette(LEG_COLORS_F, lane(47.0)), female)
-  ).toVar();
-  const bald = vertexStage(step(lane(41.0), 0.08).mul(float(1.0).sub(female))).toVar();
-  const tailored = vertexStage(step(0.42, lane(89.0))).toVar();
-  const hemY = vertexStage(mix(mix(0.955, 0.88, female), 1.0, lane(61.0))).toVar();
-  const sneaker = vertexStage(step(0.4, lane(5.0))).toVar();
+  // Reserved seeds, each a one-wide bucket: -1 the player, -2 Tobi, -3 Jensen. Everyone else keeps the hashed wardrobe.
+  const cj = step(info.x, float(-0.5)).mul(step(float(-1.5), info.x));
+  const tobi = step(info.x, float(-1.5)).mul(step(float(-2.5), info.x));
+  const jensen = step(info.x, float(-2.5)).mul(step(float(-3.5), info.x));
+  const styled = max(cj, max(tobi, jensen));
+  const skinCol = vertexStage(mix(
+    pickColorFromPalette(SKIN_COLORS, lane(17.0)),
+    mix(mix(color(0x8d5a38), color(0xe4c4a4), tobi), color(0xc9956a), jensen),
+    styled
+  )).toVar();
+  const hairCol = vertexStage(mix(
+    pickColorFromPalette(HAIR_COLORS, lane(3.0)),
+    mix(mix(color(0x1a120e), color(0x4a3424), tobi), color(0xc5c7cc), jensen),
+    styled
+  )).toVar();
+  const coatCol = vertexStage(mix(
+    mix(pickColorFromPalette(COAT_COLORS, lane(29.0)), pickColorFromPalette(COAT_COLORS_F, lane(29.0)), female),
+    mix(mix(color(0xf4f1ea), color(0x4a5568), tobi), color(0x141414), jensen),
+    styled
+  )).toVar();
+  const shirtCol = vertexStage(mix(
+    pickColorFromPalette(SHIRT_COLORS, lane(71.0)),
+    mix(mix(color(0xf4f1ea), color(0xd5d8df), tobi), color(0x1a1a1a), jensen),
+    styled
+  )).toVar();
+  const legsCol = vertexStage(mix(
+    mix(pickColorFromPalette(LEG_COLORS, lane(47.0)), pickColorFromPalette(LEG_COLORS_F, lane(47.0)), female),
+    mix(mix(color(0x243f78), color(0x5a5144), tobi), color(0x1c1e24), jensen),
+    styled
+  )).toVar();
+  const bald = vertexStage(mix(
+    mix(step(lane(41.0), 0.08).mul(float(1.0).sub(female)), float(0.0), max(cj, jensen)),
+    float(1.0),
+    tobi
+  )).toVar();
+  const tailored = vertexStage(mix(step(0.42, lane(89.0)), float(0.0), styled)).toVar();
+  const hemY = vertexStage(mix(mix(mix(0.955, 0.88, female), 1.0, lane(61.0)), float(1.06), cj)).toVar();
+  const sneaker = vertexStage(mix(step(0.4, lane(5.0)), mix(float(1.0), float(0.0), jensen), styled)).toVar();
   const upperCol = vertexStage(
     mix(
       mix(color(0x201e1c), color(0x4a3524), lane(23.0)),
@@ -842,9 +867,9 @@ function createPersonMaterial(pose, detail = 1) {
             .mul(step(abs(q.x), opening.add(0.01)))
             .mul(smoothstep(0.035, 0.075, q.z))
             .mul(tailored);
-          const neckLine = mix(1.5, 1.49, tailored);
+          const neckLine = mix(mix(1.5, 1.49, tailored), 1.42, cj);
           const torsoCol = mix(mix(legsCol, mix(coatCol, shirtCol, shirtV), step(hemY, q.y)), skinCol, step(neckLine, q.y));
-          const sleeveCol = mix(coatCol, cuffCol, smoothstep(0.92, 0.96, extraAttr.z));
+          const sleeveCol = mix(mix(coatCol, skinCol, cj), cuffCol, smoothstep(0.92, 0.96, extraAttr.z).mul(float(1.0).sub(cj)));
           const shoeCol = mix(upperCol, soleCol, step(q.y, 0.022));
           const farCol = mix(
             mix(
@@ -870,7 +895,7 @@ function createPersonMaterial(pose, detail = 1) {
   const vPartA = varying(
     vertexStage(
       vec4(
-        mix(mix(mix(mix(coatCol, legsCol, isLeg), upperCol, isShoe), skinCol, max(isHand, isHead)), hairCol, isHairPart),
+        mix(mix(mix(mix(mix(coatCol, skinCol, isArm.mul(cj)), legsCol, isLeg), upperCol, isShoe), skinCol, max(isHand, isHead)), hairCol, isHairPart),
         mix(mix(tailored, sneaker, isShoe), bald, max(isHead, isHairPart))
       )
     ),
@@ -887,6 +912,8 @@ function createPersonMaterial(pose, detail = 1) {
     vertexStage(vec4(mix(posAttr.x, extraAttr.z, isArm), posAttr.y, posAttr.z, roughnessVal)),
     'vPersonLocal'
   );
+  // x: bare arms and a scooped tank neck. y: a beard on the jaw.
+  const vLook = varying(vertexStage(vec2(cj, tobi)), 'vCameoLook');
 
   mat.colorNode = Fn(() => {
     const pId = vPartC.w;
@@ -911,9 +938,9 @@ function createPersonMaterial(pose, detail = 1) {
         .mul(chestFront)
         .mul(isTailored)
         .mul(float(1.0).sub(shirtV));
-      const zip = smoothstep(0.006, 0.0025, abs(q.x)).mul(chestFront).mul(float(1.0).sub(isTailored));
-      const collarBand = smoothstep(1.455, 1.48, q.y).mul(float(1.0).sub(isTailored));
-      const neckLine = mix(1.5, 1.49, isTailored);
+      const zip = smoothstep(0.006, 0.0025, abs(q.x)).mul(chestFront).mul(float(1.0).sub(isTailored)).mul(float(1.0).sub(vLook.x));
+      const collarBand = smoothstep(1.455, 1.48, q.y).mul(float(1.0).sub(isTailored)).mul(float(1.0).sub(vLook.x));
+      const neckLine = mix(mix(1.5, 1.49, isTailored), 1.42, vLook.x);
       const neck = smoothstep(neckLine.sub(0.004), neckLine.add(0.004), q.y);
       const hem = smoothstep(coatHemY.sub(0.004), coatHemY.add(0.004), q.y);
       const hemShade = smoothstep(coatHemY.add(0.035), coatHemY, q.y).mul(0.12);
@@ -943,7 +970,7 @@ function createPersonMaterial(pose, detail = 1) {
       })
       .ElseIf(pId.lessThan(3.5), () => {
         // Sleeves: cuffs (shirt cuff under a tailored jacket; q.x carries `along`)
-        outCol.assign(mix(colA, colB, smoothstep(0.93, 0.96, q.x)));
+        outCol.assign(mix(colA, colB, smoothstep(0.93, 0.96, q.x).mul(float(1.0).sub(vLook.x))));
       })
       .ElseIf(pId.greaterThan(5.5), () => {
         // Hair & long hair: subtle strand variation or bald scalp
@@ -961,10 +988,15 @@ function createPersonMaterial(pose, detail = 1) {
         const eyes = smoothstep(0.011, 0.006, eyeX).mul(smoothstep(0.0055, 0.002, abs(q.y.sub(1.627)))).mul(front);
         const brows = smoothstep(0.016, 0.01, eyeX).mul(smoothstep(0.0035, 0.0012, abs(q.y.sub(1.646)))).mul(front);
         const mouth = smoothstep(0.022, 0.014, abs(q.x)).mul(smoothstep(0.0045, 0.0015, abs(q.y.sub(1.549)))).mul(front);
+        const beard = vLook.y.mul(smoothstep(1.60, 1.51, q.y)).mul(smoothstep(0.012, 0.07, q.z)).mul(smoothstep(0.075, 0.03, abs(q.x)));
         const faceCol = mix(
-          colA.mul(float(1.0).sub(eyes.mul(0.7)).sub(brows.mul(0.45))),
-          colA.mul(color(0xb06a5c)).mul(1.15),
-          mouth.mul(0.7)
+          mix(
+            colA.mul(float(1.0).sub(eyes.mul(0.7)).sub(brows.mul(0.45))),
+            colA.mul(color(0xb06a5c)).mul(1.15),
+            mouth.mul(0.7)
+          ),
+          colB.mul(0.45),
+          beard
         );
         outCol.assign(mix(faceCol, colB, hairMask));
       });

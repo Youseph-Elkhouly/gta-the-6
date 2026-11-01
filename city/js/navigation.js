@@ -89,6 +89,7 @@ function buildIndex() {
     items.push(it);
   };
   for (const l of CITY_LANDMARKS) add({ kind: 'landmark', name: l.name, x: l.x, z: l.z, sub: `Landmark · ${l.district || districtAt(l.x, l.z)}`, landmarkId: l.id });
+  for (const c of window.CITY.CHARACTERS || []) add({ kind: 'character', name: c.name, x: c.stand.x, z: c.stand.z, sub: 'Character', characterId: c.id, aliases: c.aliases, keywords: 'character cameo' });
   const districtNames = new Set();
   for (const d of DISTRICTS) {
     if (districtNames.has(d.name)) continue;
@@ -150,7 +151,7 @@ function oneEdit(a, b) {
   return edits + (a.length - i) + (b.length - j) <= 1;
 }
 
-const KIND_WEIGHT = { landmark: 40, district: 30, street: 12, place: 8 };
+const KIND_WEIGHT = { character: 60, landmark: 40, district: 30, street: 12, place: 8 };
 /**
  * Places matching `query`, best first: [{ id, kind, name, sub, x, z, cat?, bounds?, distance? }]. `near` (x, z) ranks
  * nearer places a little higher and gives each its distance.

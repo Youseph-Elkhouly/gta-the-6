@@ -569,6 +569,7 @@ async function initApp() {
     if (currentCam.category !== 'follow') {
       selectCamera('chase', false);
     }
+    return true;
   }
 
   function selectCamera(camId, snap = false) {
@@ -1047,6 +1048,12 @@ async function initApp() {
   // facing along it (walking, driving & cycling; controllers.js findRoadReset)
   window.addEventListener('keydown', (e) => {
     if (isTypingInField(e)) return;
+    if (window.CITY.cameoTalk) {
+      if (e.repeat) { e.preventDefault(); return; }
+      if (e.code === 'Escape') { window.CITY.cameos.close(); e.preventDefault(); }
+      else if (e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter') { window.CITY.cameos.advance(); e.preventDefault(); }
+      return;
+    }
     if (window.CITY.uiOverlay) {
       if (e.code === 'Escape' && window.CITY.uiOverlay !== 'map') { e.preventDefault(); rideSession.closeOverlay(); }
       return;
@@ -1091,6 +1098,7 @@ async function initApp() {
       case 'KeyE':
         // board the streetcar standing at the stop / get off at a stop (streetcar-ride.js)
         if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || mapSystem.isFullMapOpen || (helpModal && !helpModal.hidden)) break;
+        if (window.CITY.cameos && window.CITY.cameos.tryTalk()) break;
         subwayRide.action() || streetcarRide.action();
         break;
       case 'KeyR': {
@@ -1211,6 +1219,7 @@ async function initApp() {
 
   // Expose programmatic API for testing & inspection
   let currentFps = 60;
+
   window.__CITY_APP = {
     renderer,
     scene,
@@ -1249,6 +1258,8 @@ async function initApp() {
     compileLog,
     getFps: () => currentFps
   };
+  window.CITY.streetTreePositions = streetDetails.treePositions;
+  if (window.CITY.cameos) window.CITY.cameos.mount(scene);
   // The quality safety net & the ?fps=1 readout (quality.js), fed every real-time frame
   const qualityNet = QUALITY.attach(window.__CITY_APP);
 
@@ -1466,6 +1477,7 @@ async function initApp() {
     const playerEnt = riding ? null : controllerManager.getActiveEntity();
     if (!holding) {
       controllerManager.update(dt, elapsed, cameraSystem.initialized ? cameraSystem.currentPos : null);
+      if (window.CITY.cameos) window.CITY.cameos.update(cameraSystem.camera, playerEnt, dt);
       if (collisionDebug) collisionDebug.update();
       if (!riding) cameraSystem.update(dt, elapsed);
       streetDetails.signalClock.value = elapsed;

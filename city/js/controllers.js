@@ -262,7 +262,7 @@ class ThirdPersonControllerManager {
 
     const onKey = (e, isDown) => {
       const action = actionsByCode.get(e.code);
-      if (!action || (isDown && (isTypingInField(e) || window.CITY.uiOverlay))) return;
+      if (!action || (isDown && (isTypingInField(e) || window.CITY.uiOverlay || window.CITY.cameoTalk))) return;
       if (isDown && e.repeat && !this._pressedCodes.has(e.code)) return;
       if (e.code === 'KeyE' && this.activeMode !== 'helicopter') return; // ground E is passenger interaction
       if (isDown) this._pressedCodes.add(e.code);
@@ -544,7 +544,8 @@ class ThirdPersonControllerManager {
     // One skinned person, posed in world space every frame by its rig (walk, run, turn, jump)
     const crowd = new PersonCrowd(1, { farDistance: Infinity });
     crowd.meshes.forEach((m) => this.scene.add(m));
-    const rig = new PersonRig({ seed: 4.2, scale: 1.0, girth: 1.02, hair: 0.18, armSwing: 1.0 });
+    // seed < 0 dresses this rig as the original lead: white tank, blue jeans, short hair (pedestrians.js). Not a borrowed mesh.
+    const rig = new PersonRig({ seed: -1, scale: 1.0, girth: 1.06, hair: 0.14, armSwing: 1.0 });
 
     // Soft Under-Foot Contact Shadow (AO)
     const shadowGeo = new THREE.PlaneGeometry(0.95, 0.95);

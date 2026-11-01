@@ -538,18 +538,18 @@ function createTourGuide({ scene, controllerManager, cameraSystem, mapSystem, tr
   // Go there now: onto the street in front of it, facing it
   function teleportToPlace(p) {
     if (p.kind === 'mylocation') return;
+    if (p.kind === 'character' && p.characterId && window.CITY.teleportToCharacter) {
+      return window.CITY.teleportToCharacter(p.characterId);
+    }
     if (p.landmarkId) {
       const key = Object.keys(TELEPORT_LOCATIONS).find((k) => k.toLowerCase() === p.landmarkId.toLowerCase());
       const loc = key && TELEPORT_LOCATIONS[key];
-      if (loc) {
-        teleportTo(loc.x, loc.z, loc.heading);
-        return;
-      }
+      if (loc) return teleportTo(loc.x, loc.z, loc.heading);
     }
     // (city-config.js streetArrival: the nearest street in front of it, and in the Don Valley pilot which surface: the
     // viaduct's deck or the valley's floor)
     const a = window.CITY.streetArrival(p.x, p.z);
-    teleportTo(a.x, a.z, a.heading, a.y);
+    return teleportTo(a.x, a.z, a.heading, a.y);
   }
 
   // ---- the search box ----------------------------------------------------------------------------------------------

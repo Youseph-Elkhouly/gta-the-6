@@ -1152,6 +1152,18 @@ class CityMapSystem {
     if (this.selectedPlace && !this.route) drawPin(ctx, toX(this.selectedPlace.x), toY(this.selectedPlace.z), 5);
     if (this.realLocation) drawRealLocation(ctx, toX(this.realLocation.x), toY(this.realLocation.z), this.realLocation.accuracy * scale);
 
+    // Cameo blips, gold, drawn under the player arrow
+    ctx.fillStyle = '#e5a443';
+    for (const c of window.CITY.CHARACTERS || []) {
+      const cx = toX(c.npc.x);
+      const cy = toY(c.npc.z);
+      if (Math.abs(cx) < w * 0.48 && Math.abs(cy) < h * 0.48) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     // Landmark blips
     for (const lm of CITY_LANDMARKS) {
       const lx = toX(lm.x);
@@ -1294,6 +1306,15 @@ class CityMapSystem {
       placed.push([lx - 6, ly - 6, lx + 6, ly + 6]);
       if (showLabel) placed.push(box);
       pins.push({ lm, lx, ly, showLabel });
+    }
+    ctx.fillStyle = '#e5a443';
+    for (const c of window.CITY.CHARACTERS || []) {
+      const cx = toX(c.npc.x);
+      const cy = toY(c.npc.z);
+      if (Math.abs(cx) > w * 0.48 || Math.abs(cy) > h * 0.48) continue;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // 4. The rock, the lake & the district watermark titles (wherever they fit), letter-spaced like a printed atlas
