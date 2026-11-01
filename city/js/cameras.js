@@ -230,7 +230,8 @@ class CameraSystem {
 
     switch (this.activePresetId) {
       case 'chase': {
-        const dist = entity.chaseDistance * this.zoomMultiplier * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
+        const aim = entity.aimShoulder || 0;
+        const dist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.82 : 1) * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
         const height = entity.chaseHeight * this.zoomMultiplier + Math.sin(this.orbitPitchOffset) * dist * 0.85;
         const horizDist = Math.cos(this.orbitPitchOffset) * dist + speedLag;
 
@@ -245,13 +246,16 @@ class CameraSystem {
           desiredPos.x -= Math.cos(entity.heading) * entity.chaseSide;
           desiredPos.z += Math.sin(entity.heading) * entity.chaseSide;
           desiredPos.y = entity.position.y + entity.chaseHeight;
+        } else if (aim) {
+          desiredPos.x += Math.cos(totalYaw) * aim;
+          desiredPos.z -= Math.sin(totalYaw) * aim;
         }
 
         const lookUpBias = entity.type === 'helicopter' ? 0.2 : (entity.type === 'car' ? 0.52 : 1.55);
         desiredLook.set(
-          entity.position.x + Math.sin(entity.heading) * 5.2,
+          entity.position.x + Math.sin(entity.heading) * 5.2 + (aim ? Math.cos(entity.heading) * aim * 0.35 : 0),
           entity.position.y + entity.cameraTargetOffset.y + lookUpBias,
-          entity.position.z + Math.cos(entity.heading) * 5.2
+          entity.position.z + Math.cos(entity.heading) * 5.2 - (aim ? Math.sin(entity.heading) * aim * 0.35 : 0)
         );
         break;
       }

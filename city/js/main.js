@@ -1260,6 +1260,8 @@ async function initApp() {
   };
   window.CITY.streetTreePositions = streetDetails.treePositions;
   if (window.CITY.cameos) window.CITY.cameos.mount(scene);
+  if (window.CITY.combat) window.CITY.combat.mount({ scene, controllerManager, cameraSystem, trafficSystem });
+  if (window.CITY.wanted) window.CITY.wanted.mount({ scene, controllerManager, cameraSystem, trafficSystem });
   // The quality safety net & the ?fps=1 readout (quality.js), fed every real-time frame
   const qualityNet = QUALITY.attach(window.__CITY_APP);
 
@@ -1476,6 +1478,7 @@ async function initApp() {
     const riding = rideSession.active || subwayRide.inside;
     const playerEnt = riding ? null : controllerManager.getActiveEntity();
     if (!holding) {
+      if (window.CITY.combat) window.CITY.combat.preUpdate(dt);
       controllerManager.update(dt, elapsed, cameraSystem.initialized ? cameraSystem.currentPos : null);
       if (window.CITY.cameos) window.CITY.cameos.update(cameraSystem.camera, playerEnt, dt);
       if (collisionDebug) collisionDebug.update();
@@ -1489,6 +1492,8 @@ async function initApp() {
         controllerManager.activeMode,
         cameraSystem.camera
       );
+      if (window.CITY.combat) window.CITY.combat.postUpdate(dt);
+      if (window.CITY.wanted) window.CITY.wanted.update(dt);
       highwayTraffic.update(dt, cameraSystem.camera, playerEnt, controllerManager.activeMode);
       if (!document.hidden && now >= nextPlayerSave) {
         savePlayerState();

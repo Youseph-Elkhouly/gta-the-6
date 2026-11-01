@@ -83,11 +83,12 @@ const CAR_KINDS = {
   van: { half: 2.96, halfWidth: 0.95, axle: 1.8, halfL: 2.88, mass: 2700, engine: 'suv' }
 };
 // Of every 20 cars: 4 taxis, 5 sedans, 6 SUVs, 2 delivery vans, 2 minivans and a pickup (most of Canada's new cars are
-// light trucks; downtown keeps plenty of sedans and taxis). One car in a hundred is a police cruiser, always a sedan.
+// light trucks; downtown keeps plenty of sedans and taxis). The first five cars are police sedans so a
+// five-star response has a cruiser each. The rest keep the mix.
 const FLEET_MIX = ['taxi', 'sedan', 'van', 'sedan', 'suv', 'taxi', 'suv', 'minivan', 'suv', 'pickup',
   'taxi', 'sedan', 'suv', 'van', 'suv', 'taxi', 'minivan', 'sedan', 'suv', 'sedan'];
 function fleetBody(i) {
-  const isPolice = (i % 100) === 6;
+  const isPolice = i < 5;
   return { isPolice, bodyType: isPolice ? 'sedan' : FLEET_MIX[i % FLEET_MIX.length] };
 }
 
@@ -593,6 +594,9 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
       diveStart: -Infinity,
       diveHeading: 0,
       diveT: 0,
+      id: `ped-${i}`,
+      health: 100,
+      dead: null,
       rig: new PersonRig({
         seed: i * 1.6180339 + 0.13,
         female,
@@ -750,7 +754,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     for (const v of vehicles) v.claimed = false;
     for (const v of vehicles) {
       const e = v.edge;
-      if (!e) continue;
+      if (!e || v.pursuit) continue;
       if (!v.conn) {
         occupy(e.occ[v.lane], v, v.s);
         const side = straddle(v);
@@ -2284,7 +2288,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     collisionStep++;
     impacted.length = 0;
     for (const v of vehicles) {
-      if (v.edge && (v.impactTime > 0 || Math.abs(v.yawVel) > 0.05 || v.vx * v.vx + v.vz * v.vz > 0.04)) {
+      if (!v.pursuit && v.edge && (v.impactTime > 0 || Math.abs(v.yawVel) > 0.05 || v.vx * v.vx + v.vz * v.vz > 0.04)) {
         v.contactStep = collisionStep;
         impacted.push(v);
       }
@@ -2292,7 +2296,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     for (let i = 0; i < impacted.length; i++) {
       const v = impacted[i];
       for (const o of vehicles) {
-        if (o === v || !o.edge || o.contactDone === collisionStep || Math.abs((v.y || 0) - (o.y || 0)) >= 2.5) continue;
+        if (o === v || o.pursuit || !o.edge || o.contactDone === collisionStep || Math.abs((v.y || 0) - (o.y || 0)) >= 2.5) continue;
         const reach = v.half + o.half + 0.5;
         const dx = v.x - o.x, dz = v.z - o.z;
         if (Math.abs(dx) > reach + Math.abs(dx - v.prevX + o.prevX)
@@ -2564,6 +2568,8 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
       p.socialTime = clock + 5 + Math.random() * 15;
       p.rig.placed = false; // stands afresh where it now is
       p.placed = true;
+      p.health = 100;
+      p.dead = null;
       if (crosswalk) atCurb(p);
       return true;
     }
@@ -2713,7 +2719,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
   }
 
   function avoidPlayer(p) {
-    if (p.knock || Math.abs(pedGround(p, p.x, p.z) - player.y) >= 2.5) return;
+    if (p.knock || p.dead || Math.abs(pedGround(p, p.x, p.z) - player.y) >= 2.5) return;
     // Commit to the landing and get-up; steering or walking during this pose would slide across the ground.
     if (clock - p.diveStart < PEDESTRIAN_DIVE_DURATION) return;
     // Stay off the walking line until the approaching vehicle has passed; returning is swept too.
@@ -2982,7 +2988,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     nextMeeting = clock + 1;
     meetingCells.clear();
     for (const p of peds) {
-      if (!p.placed || p.node || !p.route?.edge || p.conversation || clock < p.socialTime || p.t < 6 || p.t > p.len - 6) continue;
+      if (!p.placed || p.dead || p.node || !p.route?.edge || p.conversation || clock < p.socialTime || p.t < 6 || p.t > p.len - 6) continue;
       const ix = Math.floor(p.x / 2), iz = Math.floor(p.z / 2);
       let partner = null;
       for (let dx = -1; dx <= 1 && !partner; dx++) {
@@ -3339,7 +3345,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
   }
 
   function knockDown(p) {
-    if (!player.active || p.knock) return;
+    if (!player.active || p.knock || p.dead) return;
     const pe = player.entity;
     if (pe.type !== 'car' && pe.type !== 'cyclist') return;
     const dx = p.x - pe.position.x, dz = p.z - pe.position.z;
@@ -3493,6 +3499,166 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     if (count > 0) flagRange(sparkInst.instanceMatrix, count);
   }
 
+  function killPed(p, dir) {
+    if (p.conversation) endConversation(p.conversation);
+    p.v = 0;
+    p.knock = null;
+    p.waiting = false;
+    p.diveStart = -Infinity;
+    if (!p.rig.placed) p.rig.reset(p.x, p.z, Math.atan2(p.ux * p.dir, p.uz * p.dir), pedGround, p);
+    p.rig.solve();
+    p.rag = p.rag || new PersonRagdoll();
+    const ix = dir?.x || 0;
+    const iz = dir?.z || 0;
+    p.rag.start(p.rig, ix * 2.2, 1.1, iz * 2.2, ix * 0.4, iz * 0.4);
+    p.dead = { phase: 'rag', time: 0, x: p.x, z: p.z };
+    p.health = 0;
+  }
+
+  function hurtPedestrian(p, amount, dir) {
+    if (!p || !p.placed || p.dead) return null;
+    p.health = (p.health ?? 100) - amount;
+    if (p.health <= 0) {
+      killPed(p, dir);
+      return 'killed';
+    }
+    if (p.conversation) endConversation(p.conversation);
+    p.v = 0;
+    p.knock = {
+      phase: 'stumble',
+      time: 0,
+      x: p.x,
+      z: p.z,
+      vx: (dir?.x || 0) * 2.4,
+      vz: (dir?.z || 0) * 2.4,
+      yaw: Math.atan2(dir?.x || 0, dir?.z || 1)
+    };
+    return 'damaged';
+  }
+
+  function updateDead(p, dt) {
+    const d = p.dead;
+    d.time += dt;
+    if (d.phase === 'rag' && p.rag) {
+      p.rag.step(dt, groundAt, null);
+      d.x = p.rag.x;
+      d.z = p.rag.z;
+      if (p.rag.speed < 0.45 || d.time > 2.4) d.phase = 'down';
+    }
+    p.x = d.x;
+    p.z = d.z;
+    const dist = Math.hypot(p.x - focusX, p.z - focusZ);
+    if ((d.time > 8 && dist > 22) || d.time > 18) {
+      p.dead = null;
+      p.health = 100;
+      p.placed = false;
+      p.knock = null;
+      p.node = p.mid = null;
+    }
+  }
+
+  function renderDead(p) {
+    if (hasView && !visible(p.x, p.z, 7)) return;
+    if (p.rag) p.rag.apply(p.rig);
+    pedCrowd.add(p.rig, Math.hypot(p.x - focusX, p.z - focusZ));
+  }
+
+  function roadBlocked(v) {
+    const cm = window.__CITY_APP && window.__CITY_APP.controllerManager;
+    const G = window.CITY.WorldCollision;
+    if (!cm || !G || !cm.nearColliders) return false;
+    const x = v.x + Math.sin(v.yaw) * 6;
+    const z = v.z + Math.cos(v.yaw) * 6;
+    const list = cm.nearColliders(x, z, 4);
+    for (let i = 0; i < list.length; i++) {
+      const c = list[i];
+      if (c.curb || c.prop) continue;
+      if ((c.maxX - c.minX) > 80 || (c.maxY ?? 8) < 1.2) continue;
+      if (G.inside(x, z, G.colliderShape(c).points)) return true;
+    }
+    return false;
+  }
+
+  function pursueVehicle(v, dt) {
+    const dx = player.x - v.x;
+    const dz = player.z - v.z;
+    const dist = Math.hypot(dx, dz) || 0.001;
+    v.pursuit.avoid = (v.pursuit.avoid || 0) - dt;
+    if (v.pursuit.avoid <= 0) {
+      v.pursuit.avoid = 0.18;
+      v.pursuit.turn = roadBlocked(v) ? (v.pursuit.turn > 0 ? -1.15 : 1.15) : 0;
+    }
+    let target = Math.atan2(dx, dz) + (v.pursuit.turn || 0);
+    let err = target - v.yaw;
+    err = Math.atan2(Math.sin(err), Math.cos(err));
+    v.yaw += Math.max(-2.5 * dt, Math.min(2.5 * dt, err));
+    const want = dist < 11 ? 0 : Math.max(7, Math.min(18, dist * 0.4));
+    const prev = v.speed;
+    v.speed += (want - v.speed) * Math.min(1, dt * 1.7);
+    if (Math.abs(err) > 0.7) v.speed *= 0.96;
+    v.x += Math.sin(v.yaw) * v.speed * dt;
+    v.z += Math.cos(v.yaw) * v.speed * dt;
+    const cm = window.__CITY_APP && window.__CITY_APP.controllerManager;
+    v.y = cm && cm.getGroundHeight ? cm.getGroundHeight(v.x, v.z, 'car', v.y || 0) : (player.y || 0.15);
+    v.acc = (v.speed - prev) / Math.max(dt, 0.016);
+    v.pitch *= 0.85;
+    v.roll = Math.max(-0.1, Math.min(0.1, -err * 0.08));
+    v.grade = 0;
+    v.yawOffset = 0;
+    v.blink = 1;
+    v.conn = null;
+    v.pursuit.phase = dist < 11 && v.speed < 1.6 ? 'stop' : 'drive';
+    v.pursuit.dist = dist;
+  }
+
+  function warpPolice(v, slot) {
+    const ang = slot * 1.25 + 0.4;
+    const dist = 32 + (slot % 3) * 9;
+    v.x = player.x + Math.sin(ang) * dist;
+    v.z = player.z + Math.cos(ang) * dist;
+    v.prevX = v.x;
+    v.prevZ = v.z;
+    v.y = player.y || 0.2;
+    v.yaw = Math.atan2(player.x - v.x, player.z - v.z);
+    v.speed = 12;
+    if (!v.edge) {
+      const donor = cars.find((c) => c.edge && c !== v && !c.pursuit);
+      if (donor) v.edge = donor.edge;
+    }
+  }
+
+  function dispatchPolice(count) {
+    const need = Math.max(0, Math.min(5, count | 0));
+    const active = cars.filter((c) => c.pursuit);
+    while (active.length > need) {
+      const v = active.pop();
+      v.pursuit = null;
+      retire(v);
+    }
+    let slot = active.length;
+    for (const v of cars) {
+      if (active.length >= need) break;
+      if (!v.isPolice || v.pursuit) continue;
+      if (!v.edge) spawnVehicle(v, 30, 78, false);
+      const far = Math.hypot(v.x - player.x, v.z - player.z);
+      if (!v.edge || far > 90) warpPolice(v, slot);
+      if (!v.edge) continue;
+      v.pursuit = { phase: 'drive', avoid: 0, turn: 0 };
+      v.conn = null;
+      v.blink = 1;
+      active.push(v);
+      slot++;
+    }
+  }
+
+  function releasePolice() {
+    for (const v of cars) {
+      if (!v.pursuit) continue;
+      v.pursuit = null;
+      retire(v);
+    }
+  }
+
   // =========================================================================
   // 9. UPDATE
   // =========================================================================
@@ -3544,6 +3710,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     for (let scanned = 0; scanned < vehicles.length && budget > 0; scanned++) {
       const v = vehicles[vehicleCursor];
       vehicleCursor = (vehicleCursor + 1) % vehicles.length;
+      if (v.pursuit) continue;
       const d = v.edge ? Math.hypot(v.x - focusX, v.z - focusZ) : Infinity;
       if (d <= (jump ? NEAR_RADIUS : VEHICLE_RADIUS)) continue;
       if (!v.bus && !v.edge && placedCars >= carTarget) continue;
@@ -3574,6 +3741,10 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
 
       v.prevX = v.x;
       v.prevZ = v.z;
+      if (v.pursuit) {
+        pursueVehicle(v, dt);
+        continue;
+      }
       relateToPlayer(v);
       react(v, dt);
       drive(v, dt);
@@ -3582,7 +3753,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
       pose(v, dt);
     }
     if (player.active) {
-      for (const v of vehicles) if (v.edge && Math.abs((v.y || 0) - player.y) < 2.5) collideWithPlayer(v);
+      for (const v of vehicles) if (v.edge && !v.pursuit && Math.abs((v.y || 0) - player.y) < 2.5) collideWithPlayer(v);
     }
     collideTraffic();
     for (const v of vehicles) {
@@ -3648,11 +3819,12 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     for (let scanned = 0; scanned < NUM_PEDS && pedBudget > 0; scanned++) {
       const p = peds[pedCursor];
       pedCursor = (pedCursor + 1) % NUM_PEDS;
+      if (p.dead) continue;
       const d = p.placed ? Math.hypot(p.x - focusX, p.z - focusZ) : Infinity;
       if (d <= (jump ? NEAR_RADIUS : PED_RADIUS)) continue;
       if (!p.placed && placedPeds >= pedTarget) continue;
       pedBudget--;
-      if (p.placed && placedPeds > pedTarget && !p.knock) {
+      if (p.placed && placedPeds > pedTarget && !p.knock && !p.dead) {
         if (p.conversation) endConversation(p.conversation);
         p.placed = false;
         p.node = p.mid = null;
@@ -3673,6 +3845,11 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     for (let i = 0; i < NUM_PEDS; i++) {
       const p = peds[i];
       if (!p.placed) continue;
+      if (p.dead) {
+        updateDead(p, dt);
+        if (p.placed && p.dead) renderDead(p);
+        continue;
+      }
       knockDown(p);
       if (p.knock && updateKnock(p, dt)) {
         if (p.knock) renderKnocked(p, dt);
@@ -3715,6 +3892,10 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     setBusRouter: (r) => { busRouter = r; },
     placeBus,
     retireBus,
+    hurtPedestrian,
+    dispatchPolice,
+    releasePolice,
+    pursuitCars: () => cars.filter((c) => c.pursuit),
     focus: () => ({ x: focusX, z: focusZ }),
     NEAR_RADIUS,
     signalConflicts,

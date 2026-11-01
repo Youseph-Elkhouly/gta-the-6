@@ -180,6 +180,8 @@
       stand: pose.stand,
       npc: pose.npc,
       homeYaw: pose.homeYaw,
+      invulnerable: r.invulnerable !== false,
+      combatRole: r.combatRole || 'protected',
       look: { seed: r.seed, hair: r.hair, girth: r.girth, scale: r.scale, female: !!r.female, hat: !!r.hat }
     };
   });

@@ -405,3 +405,127 @@ body.is-boosting #hud-speed-meter {
   text-transform: uppercase;
   opacity: 0.75;
 }
+
+#pistol-crosshair {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 16;
+}
+#pistol-crosshair[hidden] { display: none; }
+#pistol-crosshair i {
+  position: absolute;
+  background: var(--gta-ivory);
+  box-shadow: 0 0 0 1px #000;
+}
+#pistol-crosshair i:nth-child(1),
+#pistol-crosshair i:nth-child(2) { width: 8px; height: 2px; top: 13px; }
+#pistol-crosshair i:nth-child(1) { left: 0; }
+#pistol-crosshair i:nth-child(2) { right: 0; }
+#pistol-crosshair i:nth-child(3),
+#pistol-crosshair i:nth-child(4) { width: 2px; height: 8px; left: 13px; }
+#pistol-crosshair i:nth-child(3) { top: 0; }
+#pistol-crosshair i:nth-child(4) { bottom: 0; }
+
+#pistol-ammo {
+  position: fixed;
+  top: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-hud);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: 22px;
+  color: var(--gta-ivory);
+  text-shadow: 0 2px 0 #000, 1px 1px 0 #000;
+}
+#pistol-ammo[hidden] { display: none; }
+
+#wanted-stars {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 18;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+#wanted-stars svg {
+  width: 28px;
+  height: 28px;
+  fill: rgba(23, 21, 20, 0.55);
+  stroke: var(--gta-ivory);
+  stroke-width: 1.4;
+  filter: drop-shadow(0 2px 0 #000);
+}
+#wanted-stars svg.is-on { fill: var(--gta-gold); stroke: #3a2508; }
+
+#wanted-health {
+  position: fixed;
+  top: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 18;
+  width: 156px;
+  height: 8px;
+  pointer-events: none;
+  background: rgba(23, 21, 20, 0.72);
+  box-shadow: 0 0 0 2px #000;
+}
+#wanted-health span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: #c4473a;
+}
+#wanted-health.is-low span { background: #ff5a3c; }
+
+#wasted {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: rgba(120, 12, 16, 0.28);
+  box-shadow: inset 0 0 180px 40px rgba(90, 0, 0, 0.72);
+}
+#wasted[hidden] { display: none; }
+
+/* Keep the combat readout off the phone, the street signs, and an open handset. */
+body:has(#game-phone.is-open) #wanted-stars,
+body:has(#game-phone.is-open) #wanted-health,
+body:has(#game-phone.is-open) #pistol-ammo,
+body:has(#game-phone.is-open) #pistol-crosshair {
+  visibility: hidden;
+}
+body.riding-transit #wanted-stars,
+body.in-subway #wanted-stars { top: 108px; }
+body.riding-transit #wanted-health,
+body.in-subway #wanted-health { top: 140px; }
+body.riding-transit #pistol-ammo,
+body.in-subway #pistol-ammo { top: 156px; }
+#wasted p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(92px, 16vw, 168px);
+  letter-spacing: 0.16em;
+  line-height: 0.85;
+  color: #f4e9d5;
+  text-shadow: 4px 4px 0 #000, -2px 0 0 #000, 0 6px 0 rgba(0, 0, 0, 0.45);
+  animation: wasted-flash 0.18s steps(2, end) 3;
+}
+@keyframes wasted-flash {
+  50% { opacity: 0.35; }
+}

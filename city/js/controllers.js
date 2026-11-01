@@ -1306,12 +1306,36 @@ class ThirdPersonControllerManager {
     if (this.keys.forward) targetSpeed = maxWalk * this.keys.forward;
     else if (this.keys.backward) targetSpeed = -maxWalk * 0.65 * this.keys.backward;
 
-    if (this.keys.left) p.heading += turnRate * dt * this.keys.left;
-    if (this.keys.right) p.heading -= turnRate * dt * this.keys.right;
+    let strafe = 0;
+    if (window.CITY.wanted?.isDown) {
+      p.speed = 0;
+      return;
+    }
+    if (p.combatAim && Number.isFinite(p.aimHeading)) {
+      let err = p.aimHeading - p.heading;
+      err = Math.atan2(Math.sin(err), Math.cos(err));
+      p.heading += Math.max(-10 * dt, Math.min(10 * dt, err));
+      const left = this.keys.left ? +this.keys.left : 0;
+      const right = this.keys.right ? +this.keys.right : 0;
+      strafe = right - left;
+    } else {
+      if (this.keys.left) p.heading += turnRate * dt * this.keys.left;
+      if (this.keys.right) p.heading -= turnRate * dt * this.keys.right;
+    }
 
     p.speed += (targetSpeed - p.speed) * Math.min(1, dt * 10);
 
     this.moveBody(p, 'person', dt);
+    if (strafe) {
+      const head = p.heading;
+      const fwd = p.speed;
+      // Right is heading minus a quarter turn. The opposite turn walks left.
+      p.heading = head - Math.PI / 2;
+      p.speed = maxWalk * 0.72 * strafe;
+      this.moveBody(p, 'person', dt);
+      p.heading = head;
+      p.speed = fwd;
+    }
 
     const groundY = this.getGroundHeight(p.position.x, p.position.z, 'person', p.position.y);
     if (this.interiorSpace) { p.position.y = groundY; p.verticalVel = 0; return; }
