@@ -66,8 +66,10 @@ Deploy the current game from the **`car-stains`** branch as a static site. Use t
 | Publish directory | `dist` |
 | Start command | None (static site) |
 
-The game requests live TTC vehicle positions from `/live/vehicles`, which is handled by `city/worker/live.js`. If that
-Worker endpoint is unavailable on a static host, the transit system falls back to its timetable.
+The project has also been served at [sloptoronto.ca](https://sloptoronto.ca/) through Cloudflare. Its Worker served the
+static build and `/live/vehicles`, a proxy for TTC vehicle positions. The current Render site serves the static game;
+when that Worker endpoint is unavailable, transit falls back to its timetable. The endpoint implementation is in
+`city/worker/live.js`.
 
 ## Data and credits
 
