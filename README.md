@@ -1,5 +1,9 @@
 # GTA: THE 6
 
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/0cac3828-69fe-4986-ba98-4ebe5a0777a0" width="420" controls></video>
+</p>
+
 Explore Toronto in a browser-based open-world game. Walk, cycle, drive, and fly through a detailed 3D city built around
 real Toronto streets, landmarks, transit, and waterfront locations.
 
@@ -100,3 +104,5 @@ The city uses open geospatial data from the [City of Toronto](https://open.toron
 [MIT License](city/LICENSE); data, models, and third-party components retain their own terms. See
 [`city/CREDITS.md`](city/CREDITS.md) for attribution and
 [`city/README.md`](city/README.md) for detailed developer notes, tests, and data documentation.
+
+The 3D map and render are [Slop Toronto](https://github.com/johnfewell/slop-toronto) by @johnfewell. The game layer is built on top of that city.
