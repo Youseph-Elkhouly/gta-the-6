@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { chromium } from 'playwright';
 
-test('phone opens, switches the existing mode, searches a place, teleports, and fits a mobile viewport', {
+test('phone summons vehicles without entering them, searches places, teleports, and fits a mobile viewport', {
   skip: !fs.existsSync(chromium.executablePath()) ? 'Playwright Chromium is not installed' : false,
   timeout: 20000
 }, async () => {
@@ -24,8 +24,14 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
       window.settingsPanelRef = document.getElementById('settings-panel');
       const place = { name: 'CN Tower', sub: 'Entertainment District', kind: 'landmark', x: -586, z: 553, landmarkId: 'cnTower' };
       let activeLease = null;
-      const game = window.game = { ready: true, controllerManager: { activeMode: 'person' },
-        selectMode(mode) { this.controllerManager.activeMode = mode; return true; },
+      let vehicleId = 0;
+      const game = window.game = { ready: true, controllerManager: { activeMode: 'person', worldVehicles: new Map() },
+        summonVehicle(type) {
+          for (const [id, v] of this.controllerManager.worldVehicles) if (v.type === type) this.controllerManager.worldVehicles.delete(id);
+          const id = 'summoned-' + type + '-' + (++vehicleId);
+          this.controllerManager.worldVehicles.set(id, { id, type, source: 'summoned', occupied: false });
+          return { ok: true };
+        },
         tourGuide: { search(q) { return q.toLowerCase().includes('cn') || q.toLowerCase().includes('tower') ? [place] : []; },
           teleportToPlace(p) { window.lastTeleport = p; return { x: p.x, z: p.z }; } },
         openOverlay(id, options) { if (activeLease) return false; CITY.uiOverlay = id;
@@ -50,13 +56,15 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.locator('.phone-app-icon[data-app="garage"]').click();
     assert.equal(await page.evaluate(() => phone.screen), 'garage', 'Garage opens the vehicle picker');
     await page.locator('.garage-option').filter({ hasText: 'Car' }).click();
-    assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'car');
-    assert.equal(await page.evaluate(() => CITY.uiOverlay), null, 'successful mode switch closes the phone');
+    assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'person', 'Garage keeps the player on foot');
+    assert.equal(await page.evaluate(() => game.controllerManager.worldVehicles.size), 1, 'Garage summons a world vehicle');
+    assert.equal(await page.evaluate(() => CITY.uiOverlay), null, 'successful summon closes the phone');
 
     await page.locator('#btn-phone').click();
     await page.locator('.phone-app-icon[data-app="garage"]').click();
     await page.locator('.garage-option').filter({ hasText: 'Helicopter' }).click();
-    assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'helicopter');
+    assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'person');
+    assert.equal(await page.evaluate(() => game.controllerManager.worldVehicles.size), 2, 'a helicopter can coexist with the car');
     assert.equal(await page.evaluate(() => CITY.uiOverlay), null);
 
     await page.locator('#btn-phone').click();
@@ -73,7 +81,6 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.keyboard.press('ArrowUp');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => CITY.uiOverlay), null, 'Escape releases the phone overlay');
-    await page.keyboard.press('ArrowUp');
     await page.locator('#btn-settings').click();
     assert.equal(await page.evaluate(() => phone.screen), 'settings');
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), false, 'existing settings are rendered inside the phone');
@@ -81,7 +88,6 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.locator('#btn-open-map').click();
     assert.equal(await page.evaluate(() => window.mapActivated), true, 'settings actions that open other overlays release the phone first');
     assert.equal(await page.evaluate(() => phone.isOpen()), false);
-    await page.keyboard.press('ArrowUp');
     await page.locator('#btn-settings').click();
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), false);
     await page.locator('.phone-nav-home').click();
@@ -89,8 +95,9 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.setViewportSize({ width: 390, height: 844 });
     const bounds = await page.locator('.phone-device').boundingBox();
     assert.ok(bounds && bounds.width <= 390 && bounds.height <= 844, 'phone fits the mobile viewport');
-    const legacyDisplay = await page.evaluate(() => Object.fromEntries(['#search-box','#search-results','#btn-teleport','#teleport-popover','#mode-switch'].map((selector) => [selector, getComputedStyle(document.querySelector(selector)).display])));
-    assert.ok(Object.values(legacyDisplay).every((display) => display === 'none'), 'legacy search, teleport and mode controls are removed from the visible HUD');
+    const legacyDisplay = await page.evaluate(() => Object.fromEntries(['#search-box','#search-results','#btn-teleport','#teleport-popover'].map((selector) => [selector, getComputedStyle(document.querySelector(selector)).display])));
+    assert.ok(Object.values(legacyDisplay).every((display) => display === 'none'), 'legacy search and teleport controls are removed from the visible HUD');
+    assert.equal(await page.locator('#mode-switch').count(), 0, 'direct HUD vehicle switching is removed; vehicles enter through world interaction');
   } finally {
     await browser?.close();
   }

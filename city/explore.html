@@ -5,30 +5,28 @@
   <meta name="city-build" content="__CITY_BUILD__" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>GTA: THE 6 · Downtown Toronto</title>
-  <link rel="icon" href="./assets/favicon-32.png" type="image/png" sizes="32x32" />
-  <link rel="icon" href="./assets/favicon-16.png" type="image/png" sizes="16x16" />
-  <link rel="apple-touch-icon" href="./assets/icon-180.png" />
+  <link rel="icon" href="./assets/brand/gta6-mark.svg" type="image/svg+xml" />
   <link rel="manifest" href="./assets/manifest.webmanifest" />
   <meta name="theme-color" content="#07111d" />
-  <meta name="description" content="Slop Toronto: downtown Toronto and the waterfront in 3D, in your browser. Walk, cycle, drive or fly from the Humber Bay Arch Bridge along the lake to Sugar Beach, the CN Tower and the Distillery District." />
+  <meta name="description" content="GTA: The 6 — explore downtown Toronto and the waterfront in 3D. Walk, cycle, drive or fly from the Humber Bay Arch Bridge to Sugar Beach, the CN Tower and the Distillery District." />
   <!-- social: link previews -->
   <link rel="canonical" href="./explore.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="Slop Toronto" />
+  <meta property="og:site_name" content="GTA: The 6" />
   <meta property="og:locale" content="en_CA" />
   <meta property="og:url" content="https://sloptoronto.ca/explore" />
-  <meta property="og:title" content="Explore Toronto in 3D · Slop Toronto" />
+  <meta property="og:title" content="Explore Toronto in 3D · GTA: The 6" />
   <meta property="og:description" content="Downtown Toronto and the waterfront in 3D, in your browser: walk, cycle, drive or fly past the CN Tower, along the lake and through the downtown streets." />
   <meta property="og:image" content="https://sloptoronto.ca/assets/og-toronto.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Slop Toronto: the city skyline and the CN Tower over Lake Ontario, rendered in the app" />
+  <meta property="og:image:alt" content="GTA: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Explore Toronto in 3D · Slop Toronto" />
+  <meta name="twitter:title" content="Explore Toronto in 3D · GTA: The 6" />
   <meta name="twitter:description" content="Downtown Toronto and the waterfront in 3D, in your browser: walk, cycle, drive or fly past the CN Tower, along the lake and through the downtown streets." />
   <meta name="twitter:image" content="https://sloptoronto.ca/assets/og-toronto.jpg" />
-  <meta name="twitter:image:alt" content="Slop Toronto: the city skyline and the CN Tower over Lake Ontario, rendered in the app" />
+  <meta name="twitter:image:alt" content="GTA: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
   <!-- /social -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <script>
@@ -253,7 +251,7 @@
   <div id="loading-overlay" role="status" aria-live="polite">
     <div class="gta-splash">
       <img id="gta-poster" class="gta-poster" alt="" src="./assets/brand/gta6-poster.jpg" />
-      <img id="gta-logo-fallback" class="gta-logo" alt="Grand Theft Auto: The 6, Larp Edition" src="./assets/brand/gta6-logo.svg" hidden />
+      <img id="gta-logo-fallback" class="gta-logo" alt="GTA: The 6" src="./assets/brand/gta6-logo.svg" hidden />
       <div class="gta-splash-shade"></div>
       <div class="gta-splash-grain" aria-hidden="true"></div>
       <div class="loader gta-splash-copy">
@@ -464,26 +462,11 @@
     </aside>
   </div>
 
-  <!-- Bottom-Center: Third-Person Mode Switcher & Controls Guide -->
+  <!-- Bottom-Center: Contextual controls and transit interaction -->
   <footer class="hud hud-bottom-center">
     <!-- the streetcar at hand: board it [E] (a button on touch screens), or the stop to wait at -->
     <button id="ride-prompt" class="panel ride-prompt" type="button" hidden><kbd>E</kbd><span id="ride-prompt-text"></span></button>
     <div id="hud-controls-hint" class="controls-hint"></div>
-    <nav id="mode-switch" class="panel mode-switch" aria-label="Third-Person Navigation Mode">
-      <span class="mode-indicator" aria-hidden="true"></span>
-      <button id="mode-person" class="mode-btn" data-mode="person" type="button" title="Person [1]">
-        <svg class="icon" aria-hidden="true"><use href="#i-walk"/></svg><span class="mode-label">Walk</span><kbd>1</kbd>
-      </button>
-      <button id="mode-car" class="mode-btn active" data-mode="car" type="button" title="Car [2]">
-        <svg class="icon" aria-hidden="true"><use href="#i-car"/></svg><span class="mode-label">Drive</span><kbd>2</kbd>
-      </button>
-      <button id="mode-cyclist" class="mode-btn" data-mode="cyclist" type="button" title="Cyclist [3]">
-        <svg class="icon" aria-hidden="true"><use href="#i-bike"/></svg><span class="mode-label">Cycle</span><kbd>3</kbd>
-      </button>
-      <button id="mode-helicopter" class="mode-btn" data-mode="helicopter" type="button" title="Helicopter [4]">
-        <svg class="icon" aria-hidden="true"><use href="#i-heli"/></svg><span class="mode-label">Fly</span><kbd>4</kbd>
-      </button>
-    </nav>
   </footer>
 
   <!-- Top-Center: aboard a streetcar, its route, destination & next stop -->
@@ -574,9 +557,9 @@
 
     <div class="fullmap-header">
       <div class="panel fullmap-title">
-        <img class="map-logo" src="./assets/brand/slop-toronto-mark-36.webp" srcset="./assets/brand/slop-toronto-mark-36.webp 1x, ./assets/brand/slop-toronto-mark-36-2x.webp 2x" alt="" width="36" height="36" />
+        <img class="map-logo" src="./assets/brand/gta6-mark.svg" alt="" width="36" height="36" />
         <div>
-          <h2>Slop<span> Toronto</span> Map</h2>
+          <h2>GTA: The 6 <span>Map</span></h2>
           <p id="fullmap-player-info" class="fullmap-subtitle">You are by Union Station</p>
         </div>
       </div>

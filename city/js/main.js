@@ -276,9 +276,8 @@ async function initApp() {
 
   // 4. Initialize Third-Person Controllers (Person, Car, Cyclist, Helicopter) & Multi-Camera System
   const controllerManager = new ThirdPersonControllerManager(scene, allColliders);
-  // --- Restored visits (mrdoob's 9301fcb): every player (walker, car, bicycle, helicopter) comes back where it was left,
-  // at rest, placed by the teleport's clear-arrival search; first visits start on Yonge. The film (?film) neither
-  // restores nor saves (it parks the player for its shots)
+  // --- Restored visits: each movement entity returns to its saved location at rest; the player always resumes on
+  // foot because spawned vehicle ownership is session-only. The film (?film) neither restores nor saves.
   const PLAYER_STATE_KEY = 'toronto-player-state';
   const keepPlayerState = !new URLSearchParams(location.search).has('film');
   let restoredPlayer = false;
@@ -293,7 +292,9 @@ async function initApp() {
           controllerManager.setMode(mode);
           controllerManager.teleportActiveTo(p.x, p.z, p.heading, p.y);
         }
-        controllerManager.setMode(Object.hasOwn(controllerManager.entities, saved.activeMode) ? saved.activeMode : 'cyclist');
+        // Saved movement modes can be vehicles, but vehicle ownership is session-only. Always resume on foot so a
+        // stale saved "helicopter" mode cannot strand the player in a controller with no vehicle to exit.
+        controllerManager.setMode('person');
         restoredPlayer = true;
         restoredPrivateZone = saved.privateZone || null;
       }
@@ -491,13 +492,9 @@ async function initApp() {
     }
   }
   // --- end crash damage HUD
-  // A gamepad drives too (gamepad-controls.js): its bumpers step the mode, Y the camera, Start the map
+  // A gamepad drives too (gamepad-controls.js); vehicle enter/exit uses its interact button via this same path.
   gamepadControls = new GamepadControls(controllerManager, cameraSystem, {
-    onCycleMode: (step) => {
-      const modes = ['person', 'car', 'cyclist', 'helicopter'];
-      selectMode(modes[(modes.indexOf(controllerManager.activeMode) + step + modes.length) % modes.length]);
-    },
-    onInteract: () => subwayRide.action() || streetcarRide.action(),
+    onInteract: () => interactWithWorldVehicle() || subwayRide.action() || streetcarRide.action(),
     onCycleCamera: (step) => cycleCamera(step),
     onToggleMap: () => mapSystem.toggleFullMap(!mapSystem.isFullMapOpen),
     onCloseMap: () => mapSystem.toggleFullMap(false),
@@ -508,10 +505,10 @@ async function initApp() {
 
   // Keyboard guide for each mode: [keys, action]
   const controlHints = {
-    person: [[['W', 'S'], 'Walk'], [['A', 'D'], 'Turn'], [['Shift'], 'Sprint'], [['Space'], 'Jump'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
-    car: [[['W', 'S'], 'Drive / Reverse'], [['A', 'D'], 'Steer'], [['Shift'], 'Floor it'], [['Space'], 'Handbrake'], [['B'], 'Horn'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
-    cyclist: [[['W', 'S'], 'Pedal / Brake'], [['A', 'D'], 'Lean & Turn'], [['Shift'], 'Sprint'], [['B'], 'Bell'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
-    helicopter: [[['W', 'S'], 'Pitch'], [['A', 'D'], 'Yaw'], [['Space', 'E'], 'Ascend'], [['Q', 'C'], 'Descend'], [['Shift'], 'Boost']],
+    person: [[['W', 'S'], 'Walk'], [['A', 'D'], 'Turn'], [['Shift'], 'Sprint'], [['Space'], 'Jump'], [['E'], 'Enter / Exit'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
+    car: [[['W', 'S'], 'Drive / Reverse'], [['A', 'D'], 'Steer'], [['Shift'], 'Floor it'], [['Space'], 'Handbrake'], [['E'], 'Exit vehicle'], [['B'], 'Horn'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
+    cyclist: [[['W', 'S'], 'Pedal / Brake'], [['A', 'D'], 'Lean & Turn'], [['Shift'], 'Sprint'], [['E'], 'Exit vehicle'], [['B'], 'Bell'], [['R'], 'Back to the road'], [['Drag'], 'Orbit']],
+    helicopter: [[['W', 'S'], 'Pitch'], [['A', 'D'], 'Yaw'], [['Space'], 'Ascend'], [['Q', 'C'], 'Descend'], [['E'], 'Land to exit'], [['Shift'], 'Boost']],
     streetcar: [[['E'], 'Get off / Request stop'], [['V'], 'Seat / Chase'], [['Drag'], 'Look around']],
     subway: [[['E'], 'Get off at arrival'], [['V'], 'Seat / Exterior on viaduct'], [['Drag'], 'Look around']],
     station: [[['W', 'S'], 'Walk along platform'], [['A', 'D'], 'Turn'], [['E'], 'Board train']]
@@ -946,6 +943,75 @@ async function initApp() {
     onTeleport: teleportTo
   });
 
+  const vehiclePrompt = document.createElement('button');
+  vehiclePrompt.type = 'button';
+  vehiclePrompt.className = 'vehicle-interaction-prompt';
+  vehiclePrompt.setAttribute('role', 'status');
+  vehiclePrompt.setAttribute('aria-live', 'polite');
+  vehiclePrompt.hidden = true;
+  document.body.appendChild(vehiclePrompt);
+  let nearbyVehicleAction = null;
+  function updateVehiclePrompt() {
+    const blocked = window.CITY.uiOverlay || window.CITY.cameoTalk || mapSystem.isFullMapOpen ||
+      (helpModal && !helpModal.hidden) || document.hidden || isTypingInField({ target: document.activeElement }) ||
+      document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.isContentEditable;
+    if (blocked) { vehiclePrompt.hidden = true; nearbyVehicleAction = null; return; }
+    const cm = controllerManager;
+    if (cm.activeMode !== 'person') {
+      nearbyVehicleAction = cm.activeVehicle ? { kind: 'exit' } : null;
+      if (cm.activeVehicle?.type === 'helicopter') {
+        vehiclePrompt.textContent = cm.isHelicopterGroundedAndStopped(cm.activeVehicle.entity)
+          ? '[E] Exit Helicopter' : '[E] Land and stop to exit';
+      } else vehiclePrompt.textContent = '[E] Exit Vehicle';
+      vehiclePrompt.hidden = !cm.activeVehicle;
+      return;
+    }
+    const p = cm.getActiveEntity().position;
+    const candidates = [...cm.worldVehicles.values()]
+      .filter((v) => !v.occupied && Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) <= 3.8)
+      .map((v) => ({ kind: 'enter', record: v, distance: Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) }));
+    const trafficCar = trafficSystem.nearestDrivableCar?.(p.x, p.z, 3.8);
+    if (trafficCar) candidates.push({ kind: 'traffic', candidate: trafficCar, distance: trafficCar.distance });
+    candidates.sort((a, b) => a.distance - b.distance);
+    nearbyVehicleAction = candidates[0] || null;
+    if (!nearbyVehicleAction) { vehiclePrompt.hidden = true; return; }
+    const helicopter = nearbyVehicleAction.record?.type === 'helicopter';
+    vehiclePrompt.textContent = helicopter ? '[E] Enter Helicopter' : '[E] Enter Vehicle';
+    vehiclePrompt.hidden = false;
+  }
+  function refreshVehicleMode() {
+    const ent = controllerManager.getActiveEntity();
+    if (elMode) elMode.textContent = ent.label;
+    renderControlHints(controllerManager.activeMode);
+    modeButtons.forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-mode') === controllerManager.activeMode));
+    document.body.dataset.mode = controllerManager.activeMode;
+    touchControls.setMode(controllerManager.activeMode);
+    gamepadControls.reset();
+    // Vehicle follow cameras track the controller entity, never a stale transit passenger.
+    cameraSystem.followOverride = null;
+    cameraSystem.resetForTeleport();
+    selectCamera('chase', true);
+    placeModeIndicator();
+  }
+  function summonVehicle(type) {
+    return controllerManager.summonVehicle(type, trafficSystem);
+  }
+  function interactWithWorldVehicle() {
+    if (controllerManager.activeMode !== 'person' && controllerManager.activeVehicle) {
+      const result = controllerManager.exitVehicle(trafficSystem);
+      if (result.ok) refreshVehicleMode();
+      else { vehiclePrompt.textContent = result.message; vehiclePrompt.hidden = false; }
+      return true;
+    }
+    if (controllerManager.activeMode === 'person' && nearbyVehicleAction) {
+      let record = nearbyVehicleAction.record;
+      if (nearbyVehicleAction.kind === 'traffic') record = controllerManager.adoptTrafficCar(trafficSystem, nearbyVehicleAction.candidate);
+      if (record && controllerManager.enterVehicle(record)) { refreshVehicleMode(); return true; }
+    }
+    return false;
+  }
+  vehiclePrompt.addEventListener('click', interactWithWorldVehicle);
+
   // The tour guide: search, directions, navigation & Tour Drive (tour-guide.js)
   tourGuide = createTourGuide({ scene, controllerManager, cameraSystem, mapSystem, trafficSystem, teleportTo, selectMode, onPlaceChange: (open) => touchControls.setPanelOpen(open) });
 
@@ -1044,7 +1110,7 @@ async function initApp() {
     });
   }
 
-  // Global keyboard shortcuts for modes (1-4), cameras (V / 5-0), HUD (H), and R: back onto the nearest clear road,
+  // Global keyboard shortcuts for cameras (V / 5-0), HUD (H), and R: back onto the nearest clear road,
   // facing along it (walking, driving & cycling; controllers.js findRoadReset)
   window.addEventListener('keydown', (e) => {
     if (isTypingInField(e)) return;
@@ -1059,18 +1125,6 @@ async function initApp() {
       return;
     }
     switch (e.code) {
-      case 'Digit1':
-        selectMode('person');
-        break;
-      case 'Digit2':
-        selectMode('car');
-        break;
-      case 'Digit3':
-        selectMode('cyclist');
-        break;
-      case 'Digit4':
-        selectMode('helicopter');
-        break;
       case 'Digit5':
         selectCamera('chase', true);
         break;
@@ -1096,9 +1150,12 @@ async function initApp() {
         if (hudToggleBtn) hudToggleBtn.click();
         break;
       case 'KeyE':
-        // board the streetcar standing at the stop / get off at a stop (streetcar-ride.js)
-        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || mapSystem.isFullMapOpen || (helpModal && !helpModal.hidden)) break;
+        if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || mapSystem.isFullMapOpen || (helpModal && !helpModal.hidden) ||
+          document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.isContentEditable) break;
+        // While driving, E belongs to vehicle exit and should not be consumed by a nearby NPC interaction.
+        if (controllerManager.activeMode !== 'person' && controllerManager.activeVehicle && interactWithWorldVehicle()) break;
         if (window.CITY.cameos && window.CITY.cameos.tryTalk()) break;
+        if (interactWithWorldVehicle()) break;
         subwayRide.action() || streetcarRide.action();
         break;
       case 'KeyR': {
@@ -1154,9 +1211,8 @@ async function initApp() {
     }
   }
 
-  // Initialize default selection: the restored player's mode, else the bicycle
-  // a first visit starts on the bike at the start (Sugar Beach), facing the skyline; the idle car & walker wait on the
-  // nearest road (Queens Quay) instead of standing on the lawn in front of the view
+  // Start on foot on every visit. Saved positions are restored, but vehicle mode is not: spawned vehicle ownership is
+  // session-only and cannot safely be resumed as if the player were still inside a car or helicopter.
   const startAt = window.CITY.TELEPORT_LOCATIONS.start;
   if (!restoredPlayer && startAt) {
     for (const mode of ['car', 'person']) {
@@ -1165,7 +1221,7 @@ async function initApp() {
       if (road) controllerManager.teleportActiveTo(road.x, road.z, road.heading);
     }
   }
-  selectMode(restoredPlayer ? controllerManager.activeMode : 'cyclist');
+  selectMode('person');
   if (!restoredPlayer && startAt) controllerManager.teleportActiveTo(startAt.x, startAt.z, startAt.heading);
   selectCamera('chase', true);
   // Live by default: Toronto's time & weather (?time=<preset> and automated captures open on a preset, live-sky.js)
@@ -1246,6 +1302,7 @@ async function initApp() {
     lightingSystem,
     mapSystem,
     selectMode,
+    summonVehicle,
     selectCamera,
     cycleCamera,
     selectTime,
@@ -1480,6 +1537,7 @@ async function initApp() {
     if (!holding) {
       if (window.CITY.combat) window.CITY.combat.preUpdate(dt);
       controllerManager.update(dt, elapsed, cameraSystem.initialized ? cameraSystem.currentPos : null);
+      updateVehiclePrompt();
       if (window.CITY.cameos) window.CITY.cameos.update(cameraSystem.camera, playerEnt, dt);
       if (collisionDebug) collisionDebug.update();
       if (!riding) cameraSystem.update(dt, elapsed);

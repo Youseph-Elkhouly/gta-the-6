@@ -3883,6 +3883,36 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     pedRoutes, // (pedestrian-signals.js: the crosswalks people use)
     whyWaiting, // (tools/traffic-measure.js)
     placeVehicle: place, // (tools/shots/traffic-swerve.json: a car set down where a capture needs it)
+    // Ambient instanced cars cannot be handed to the player renderer directly. This adapter retires one
+    // deterministic traffic actor and returns its transform/paint so the existing player car controller can
+    // take ownership at the same position without leaving the traffic car behind.
+    nearestDrivableCar(x, z, radius = 3.5) {
+      let best = null;
+      for (let i = 0; i < cars.length; i++) {
+        const v = cars[i];
+        if (!v.edge || v.isPolice || v.bus || Math.abs(v.speed || 0) > 1.5) continue;
+        const d = Math.hypot(v.x - x, v.z - z);
+        if (d > radius || (best && d >= best.distance)) continue;
+        best = { id: `traffic-car-${i}`, distance: d, x: v.x, z: v.z, y: v.y || 0,
+          heading: v.yaw + (v.yawOffset || 0), speed: v.speed || 0, bodyType: v.bodyType,
+          paint: v.paint?.slice() || [0.7, 0.7, 0.7], style: v.style };
+      }
+      return best;
+    },
+    claimDrivableCar(id) {
+      const match = /^traffic-car-(\d+)$/.exec(String(id));
+      if (!match) return null;
+      const v = cars[Number(match[1])];
+      if (!v || !v.edge || v.isPolice || v.bus || Math.abs(v.speed || 0) > 1.5) return null;
+      const taken = { id, x: v.x, z: v.z, y: v.y || 0, heading: v.yaw + (v.yawOffset || 0),
+        speed: v.speed || 0, bodyType: v.bodyType, paint: v.paint?.slice() || [0.7, 0.7, 0.7], style: v.style };
+      retire(v);
+      return taken;
+    },
+    vehicleSpawnClear(x, z, radius = 3.5) {
+      return !cars.some((v) => v.edge && Math.hypot(v.x - x, v.z - z) < radius + (v.halfL || 2.4)) &&
+        !buses.some((v) => v.edge && Math.hypot(v.x - x, v.z - z) < radius + (v.halfL || 6));
+    },
     wayThrough, // streetcars.js: a vehicle inside a junction has to clear it
     get carTarget() { return carTarget; },
     get pedTarget() { return pedTarget; },

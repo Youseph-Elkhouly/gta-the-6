@@ -1,10 +1,9 @@
 // The in-game handset is an interface over the existing controller and tour-guide APIs.
 (function () {
   const VEHICLES = [
-    { id: 'person', label: 'On Foot', detail: 'Walk the blocks', icon: '♙', color: 'walk' },
-    { id: 'car', label: 'Car', detail: 'Take the wheel', icon: '▰', color: 'car' },
-    { id: 'cyclist', label: 'Bicycle', detail: 'Ride the lanes', icon: '◉', color: 'bike' },
-    { id: 'helicopter', label: 'Helicopter', detail: 'Get above it all', icon: '✣', color: 'heli' }
+    { id: 'car', label: 'Car', detail: 'Summon nearby', icon: '▰', color: 'car' },
+    { id: 'cyclist', label: 'Bicycle', detail: 'Summon nearby', icon: '◉', color: 'bike' },
+    { id: 'helicopter', label: 'Helicopter', detail: 'Summon in open space', icon: '✣', color: 'heli' }
   ];
   const QUICK_DESTINATIONS = ['CN Tower', 'Rogers Centre', 'Union Station', 'Nathan Phillips Square', 'Dundas Square'];
   const APPS = [
@@ -29,7 +28,7 @@
           <div class="phone-status"><span class="phone-signal" aria-label="Signal"><i></i><i></i><i></i><i></i></span><span class="phone-carrier-mark" aria-label="Carrier" aria-hidden="true">◕</span><span class="phone-day">Wed</span><span class="phone-clock">--:--</span><span class="phone-battery" aria-label="Battery full"><i></i><b></b></span></div>
           <div class="phone-service-band"><span>Home</span></div>
           <div class="phone-content"></div>
-          <button class="phone-add" type="button" aria-label="Open Garage to spawn or switch vehicles" title="Garage · spawn or switch vehicles">+</button>
+          <button class="phone-add" type="button" aria-label="Open Garage to summon a vehicle" title="Garage · summon a vehicle">+</button>
         </div>
         <nav class="phone-home-bar" aria-label="Phone shortcuts">
           <button class="phone-nav-search" type="button" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.2"/><path d="m15 15 5 5"/></svg><span class="phone-nav-label">Search</span></button>
@@ -116,28 +115,27 @@
       content.replaceChildren();
       const intro = document.createElement('p'); intro.className = 'garage-intro'; intro.textContent = 'Choose what gets you there.'; content.appendChild(intro);
       const list = document.createElement('div'); list.className = 'garage-list';
-      const active = game.controllerManager.activeMode;
-      const current = VEHICLES.find((v) => v.id === active);
-      const note = document.createElement('p'); note.className = 'phone-section-label'; note.textContent = `CURRENTLY ACTIVE · ${current?.label || active}`; list.appendChild(note);
+      const note = document.createElement('p'); note.className = 'phone-section-label'; note.textContent = 'SUMMON A VEHICLE'; list.appendChild(note);
       VEHICLES.forEach((vehicle) => {
+        const existing = [...game.controllerManager.worldVehicles.values()].find((v) => v.type === vehicle.id && v.source === 'summoned');
         const button = document.createElement('button');
-        button.type = 'button'; button.className = `garage-option ${vehicle.id === active ? 'is-active' : ''}`;
-        button.setAttribute('aria-pressed', String(vehicle.id === active));
+        button.type = 'button'; button.className = `garage-option ${existing ? 'is-active' : ''}`;
+        button.setAttribute('aria-pressed', String(!!existing));
         button.innerHTML = `<span class="garage-glyph ${vehicle.color}" aria-hidden="true"></span><span class="garage-copy"><strong></strong><small></small></span><span class="garage-state" aria-hidden="true"></span>`;
         button.querySelector('.garage-glyph').textContent = vehicle.icon;
         button.querySelector('strong').textContent = vehicle.label;
-        button.querySelector('small').textContent = vehicle.detail;
+        button.querySelector('small').textContent = existing ? 'Already summoned · tap to replace' : vehicle.detail;
         button.addEventListener('click', () => {
-          const switched = game.selectMode(vehicle.id);
-          if (switched) close();
+          const result = game.summonVehicle(vehicle.id);
+          if (result?.ok) close();
           else {
             button.classList.add('has-error');
-            button.querySelector('small').textContent = 'Can’t switch here — try a clearer spot.';
+            button.querySelector('small').textContent = result?.message || 'Could not find a clear place to spawn.';
           }
         });
         list.appendChild(button);
       });
-      const foot = document.createElement('p'); foot.className = 'phone-footnote'; foot.textContent = 'Vehicles stay where you leave them. Switching keeps you close.'; list.appendChild(foot);
+      const foot = document.createElement('p'); foot.className = 'phone-footnote'; foot.textContent = 'Walk up and press E to get in.'; list.appendChild(foot);
       content.appendChild(list);
     }
 
