@@ -25,10 +25,9 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
   const contrast = uniform(1.0).setGroup(renderGroup);
   const saturation = uniform(1.0).setGroup(renderGroup);
   const balance = uniform(new THREE.Vector3(1, 1, 1)).setGroup(renderGroup);
-  // GTAVisualPreset: a grade on the finished image. 1 is the amber/teal look, 0 is the original grade.
-  let gtaOn = true;
-  try { if (localStorage.getItem('gta6-look') === 'original') gtaOn = false; } catch (e) { /* private mode */ }
-  const gta = uniform(gtaOn ? 1 : 0).setGroup(renderGroup);
+  // The game's GTA colour grade is part of its default look and stays enabled.
+  const gtaOn = true;
+  const gta = uniform(1).setGroup(renderGroup);
   const exposed = max(reflections ? sceneColor.rgb.add(reflections.rgb) : sceneColor.rgb, vec3(0)).mul(exposure).mul(balance);
 
   // Limit only bloom's peak radiance, scaling RGB together to retain neon and lamp colors.
@@ -93,26 +92,12 @@ function createPostProcessing(renderer, sceneColor, reflections, options = {}) {
     }
   }
 
-  function setGtaLook(on) {
-    gtaOn = !!on;
-    gta.value = gtaOn ? 1 : 0;
-    try { localStorage.setItem('gta6-look', gtaOn ? 'gta' : 'original'); } catch (e) { /* private mode */ }
-    const btn = document.getElementById('btn-gta-look');
-    if (btn) {
-      btn.setAttribute('aria-pressed', String(gtaOn));
-      btn.classList.toggle('active', gtaOn);
-      btn.textContent = gtaOn ? 'GTA look' : 'Original look';
-    }
-  }
   const GTAVisualPreset = {
     id: 'gta-golden',
-    get enabled() { return gtaOn; },
-    set: setGtaLook,
-    toggle() { setGtaLook(!gtaOn); }
+    enabled: gtaOn
   };
 
   applyPreset('golden');
-  setGtaLook(gtaOn);
   window.CITY.GTAVisualPreset = GTAVisualPreset;
   return { outputNode, bloomPass, applyPreset, exposure, contrast, saturation, balance, GTAVisualPreset };
 }

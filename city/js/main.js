@@ -745,9 +745,9 @@ async function initApp() {
     liveBtn.setAttribute('aria-pressed', String(active));
     const { clock, sky } = liveSummary();
     if (liveLabel) liveLabel.textContent = active ? `Live · ${clock}` : 'Live';
-    liveBtn.title = active
+    liveBtn.setAttribute('aria-label', active
       ? `Live: Toronto at ${clock}${sky ? `, ${sky} at Pearson (Environment and Climate Change Canada)` : ''}`
-      : 'Back to live: Toronto\'s time of day and weather right now';
+      : 'Back to live: Toronto\'s time of day and weather right now');
   }
   const elToast = document.getElementById('toast');
   let toastTimer = 0;
@@ -1581,6 +1581,7 @@ async function initApp() {
         }
         setLoadingProgress(1);
         window.__CITY_APP.ready = true;
+        window.__CITY_APP.phone = window.CITY.createPhoneManager(window.__CITY_APP);
         openDeepLink();
         if (multiplayer) multiplayer.start({ tourGuide, rideSession, subwayRide, teleportTo, camera: cameraSystem.camera });
         // The phone tiers: the CPU copies of what the GPU now holds go (scene-culling.js), a second pass a little later
