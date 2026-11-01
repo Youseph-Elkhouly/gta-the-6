@@ -433,6 +433,34 @@ body::after {
 .hud-top-right {
   top: var(--edge);
   right: var(--edge);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.settings-cog {
+  width: 44px;
+  height: 44px;
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(440px, calc(100vw - 24px));
+  padding: 6px;
+}
+
+.settings-panel[hidden] {
+  display: none !important;
+}
+
+.settings-panel .toolbar {
+  height: auto;
+  flex-wrap: wrap;
+  width: 100%;
+  padding: 2px;
 }
 
 .hud-bottom-left {
@@ -479,9 +507,6 @@ body.hud-minimized .hud-bottom-left,
 body.hud-minimized .hud-bottom-right { transform: translateY(12px); }
 body.hud-minimized .hud-bottom-center { transform: translate(-50%, 12px); }
 
-body.hud-minimized .toolbar > :not(#btn-toggle-hud) {
-  display: none;
-}
 
 /* Film mode (js/film.js, ?film=1): the city alone, no UI at all */
 body.film > :not(#canvas-container),
@@ -1560,7 +1585,7 @@ body[data-mode='car'] .gauge-health {
   .time-btn.active .seg-label { display: none; }
   .time-btn.active { padding: 0 9px; gap: 0; }
   .radar { display: none; }
-  .hud-bottom-right { bottom: calc(var(--edge) + 64px); }
+  .hud-bottom-right { display: none; }
   .gauge { display: none; }
   .camera-switch { border-top: 0; }
 }
@@ -1687,7 +1712,7 @@ body.touch-enabled .tool-label { display: none; }
 body.touch-enabled .hud-bottom-center { bottom: max(var(--edge), env(safe-area-inset-bottom)); }
 body.touch-enabled .mode-label { display: block; font-size: 10px; }
 body.touch-enabled .mode-btn { width: 62px; height: 48px; padding: 0; flex-direction: column; justify-content: center; gap: 3px; }
-body.touch-enabled .hud-bottom-right { top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px); right: max(var(--edge), env(safe-area-inset-right)); bottom: auto; }
+body.touch-enabled .hud-bottom-right { display: none; }
 body.touch-enabled .cluster { width: 230px; }
 body.touch-enabled .camera-switch { border: 0; }
 body.touch-enabled .camera-switch .icon-btn { width: 44px; height: 44px; }

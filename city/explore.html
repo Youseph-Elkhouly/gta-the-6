@@ -177,19 +177,6 @@
        Session replay is deliberately left out (counter only).
        async, not defer: deferred scripts run in document order, so the city's module script below would wait for them. -->
   <script async src="https://umami.cloud6711.workers.dev/script.js" data-website-id="75a0f1a3-3bb4-4dd9-adde-eade0b719665" data-domains="sloptoronto.ca,www.sloptoronto.ca"></script>
-  <style>
-    #gta-hud {
-      position: fixed; top: 118px; right: 14px; z-index: 40;
-      font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      color: #e8eef9; background: rgba(12, 16, 22, 0.72);
-      border: 1px solid rgba(120, 150, 190, 0.28); border-radius: 8px;
-      padding: 8px 12px; pointer-events: none; min-width: 180px;
-    }
-    #gta-hud .gta-title { font-weight: 700; letter-spacing: 0.12em; }
-    #gta-hud .gta-sub { color: #8ea0b8; font-size: 10px; margin-bottom: 4px; }
-    #gta-hud .gta-row { display: flex; justify-content: space-between; gap: 14px; }
-    #gta-hud .k { color: #7d8aa0; }
-  </style>
 </head>
 <body>
   <!-- Icon sprite (24 × 24 stroke icons, drawn in currentColor) -->
@@ -216,6 +203,7 @@
       <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M14.5 6.5 9 12l5.5 5.5"/></symbol>
       <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></symbol>
       <symbol id="i-camera" viewBox="0 0 24 24"><rect x="2.8" y="6.5" width="12.4" height="11" rx="2.4"/><path d="m15.2 10.4 6-3.4v10l-6-3.4"/></symbol>
+      <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.06a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.06a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.06a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.06a1.65 1.65 0 0 0-1.54 1z"/></symbol>
       <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
       <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5.5 12h13"/></symbol>
       <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.4"/><circle cx="12" cy="12" r="1.7" fill="currentColor"/><path d="M12 2.5v3.1M12 18.4v3.1M2.5 12h3.1M18.4 12h3.1"/></symbol>
@@ -342,14 +330,6 @@
 
   <!-- 3D WebGPU Viewport Container -->
   <main id="canvas-container" aria-label="GTA: THE 6 downtown Toronto"></main>
-  <div id="gta-hud">
-    <div class="gta-title">GTA: THE 6</div>
-    <div class="gta-sub">Slop Toronto engine · MIT · mrdoob &amp; John Fewell</div>
-    <div class="gta-row"><span class="k">FPS</span><span id="gta-fps">—</span></div>
-    <div class="gta-row"><span class="k">Mode</span><span id="gta-mode">—</span></div>
-    <div class="gta-row"><span class="k">Pos X</span><span id="gta-x">—</span></div>
-    <div class="gta-row"><span class="k">Pos Z</span><span id="gta-z">—</span></div>
-  </div>
 
   <!-- Top-Left: Search, place card & directions (tour-guide.js) -->
   <header class="hud hud-top-left">
@@ -456,9 +436,13 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Top-Right Toolbar: Time of Day, Teleport, Map & Clean View -->
+  <!-- Top-Right: one settings cog. Time, sights, map, sound, and the camera live inside it. -->
   <div class="hud hud-top-right">
-    <div id="hud-toolbar" class="panel toolbar">
+    <button id="btn-settings" class="panel tool-btn icon-only settings-cog" type="button" aria-expanded="false" aria-controls="settings-panel" title="Settings" aria-label="Settings">
+      <svg class="icon" aria-hidden="true"><use href="#i-cog"/></svg>
+    </button>
+    <div id="settings-panel" class="panel settings-panel" hidden>
+    <div id="hud-toolbar" class="toolbar">
       <div class="time-switch" role="group" aria-label="Atmosphere &amp; time of day">
         <button id="time-live" class="time-btn live-btn" data-live type="button" aria-pressed="false" title="Live: Toronto's time of day and weather right now">
           <svg class="icon" aria-hidden="true"><use href="#i-live"/></svg><span class="seg-label">Live</span>
@@ -498,10 +482,22 @@
         <svg class="icon icon-hide" aria-hidden="true"><use href="#i-eye"/></svg><svg class="icon icon-show" aria-hidden="true"><use href="#i-eye-off"/></svg>
       </button>
     </div>
+    <div id="camera-switch" class="camera-switch">
+      <button id="cam-prev" class="icon-btn" type="button" title="Previous camera" aria-label="Previous camera">
+        <svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+      </button>
+      <button id="cam-menu-btn" class="camera-current" type="button" popovertarget="camera-popover" title="All cameras [V cycles]">
+        <svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span id="hud-active-camera">3rd-Person Chase</span><kbd>V</kbd>
+      </button>
+      <button id="cam-next" class="icon-btn" type="button" title="Next camera [V]" aria-label="Next camera">
+        <svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+      </button>
+    </div>
+    </div>
   </div>
 
   <!-- Teleport Destinations (native popover: light-dismiss & Esc) -->
-  <div id="teleport-popover" class="popover" popover data-side="below" data-anchor="hud-toolbar" aria-label="Teleport the active player">
+  <div id="teleport-popover" class="popover" popover data-side="below" data-anchor="btn-teleport" data-align="settings-panel" aria-label="Teleport the active player">
     <div class="pop-title">Featured ride</div>
     <button id="tp-ride504" class="pop-item tp-btn ride-btn" data-ride="504" type="button"><span class="pop-name">Ride the 504 along King</span><span class="pop-sub">Board a King streetcar · sit back &amp; watch the city</span></button>
     <button class="pop-item tp-btn ride-btn" data-ride="subway" type="button"><span class="pop-name">Ride the subway across the Don Valley</span><span class="pop-sub">Castle Frank ↔ Broadview · Line 2</span></button>
@@ -568,9 +564,9 @@
     <div class="wrecked-sub">Restarting in <span id="hud-wrecked-time">3</span>s</div>
   </div>
 
-  <!-- Bottom-Right: Speed Cluster & Camera Switcher -->
+  <!-- Bottom-Right: speed. The camera picker lives in Settings. -->
   <div class="hud hud-bottom-right">
-    <section id="hud-cluster" class="panel cluster" aria-label="Vehicle telemetry and camera">
+    <section id="hud-cluster" class="panel cluster" aria-label="Vehicle telemetry">
       <div class="gauge">
         <div class="gauge-top">
           <span id="hud-active-mode" class="gauge-label">Cyclist</span>
@@ -583,17 +579,6 @@
           <span class="gauge-health-label">Condition</span>
           <div class="gauge-meter" role="meter" aria-label="Car condition" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="hud-health"><span id="hud-health-meter"></span></div>
         </div>
-      </div>
-      <div id="camera-switch" class="camera-switch">
-        <button id="cam-prev" class="icon-btn" type="button" title="Previous camera" aria-label="Previous camera">
-          <svg class="icon" aria-hidden="true"><use href="#i-chevron-left"/></svg>
-        </button>
-        <button id="cam-menu-btn" class="camera-current" type="button" popovertarget="camera-popover" title="All cameras [V cycles]">
-          <svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg><span id="hud-active-camera">3rd-Person Chase</span><kbd>V</kbd>
-        </button>
-        <button id="cam-next" class="icon-btn" type="button" title="Next camera [V]" aria-label="Next camera">
-          <svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg>
-        </button>
       </div>
     </section>
   </div>
@@ -622,7 +607,7 @@
   </section>
 
   <!-- All Cameras: 3 Follow Cameras + Toronto's Landmark Vantage Points + Auto-Director Drone -->
-  <div id="camera-popover" class="popover" popover data-side="above" data-anchor="hud-cluster" data-align="hud-cluster" aria-label="Multiple Camera Angles">
+  <div id="camera-popover" class="popover" popover data-side="below" data-anchor="camera-switch" data-align="settings-panel" aria-label="Multiple Camera Angles">
     <div class="pop-title">Follow</div>
     <button id="cam-chase" class="pop-item cam-btn active" data-camera="chase" type="button"><span class="pop-name">3rd-Person Chase</span><kbd>5</kbd></button>
     <button id="cam-action" class="pop-item cam-btn" data-camera="action" type="button"><span class="pop-name">Low-Angle Action</span><kbd>6</kbd></button>
@@ -831,20 +816,31 @@
     }
   </script>
   <script>
-    // GTA: THE 6 debug strip. The city loop lives in js/main.js (window.__CITY_APP).
-    setInterval(() => {
-      const app = window.__CITY_APP;
-      const fps = document.getElementById('gta-fps');
-      const mode = document.getElementById('gta-mode');
-      const x = document.getElementById('gta-x');
-      const z = document.getElementById('gta-z');
-      if (!fps || !app || !app.ready) return;
-      fps.textContent = String(app.getFps?.() ?? '—');
-      const mgr = app.controllerManager;
-      mode.textContent = mgr?.activeMode || '—';
-      const p = mgr?.getActiveEntity?.()?.position;
-      if (p) { x.textContent = p.x.toFixed(1); z.textContent = p.z.toFixed(1); }
-    }, 250);
+    const settingsBtn = document.getElementById('btn-settings');
+    const settingsPanel = document.getElementById('settings-panel');
+    function setSettingsOpen(open) {
+      settingsPanel.hidden = !open;
+      settingsBtn.setAttribute('aria-expanded', String(open));
+      settingsBtn.classList.toggle('is-open', open);
+      if (!open) {
+        document.querySelectorAll('.popover[popover]').forEach((pop) => {
+          if (pop.matches(':popover-open')) pop.hidePopover();
+        });
+      }
+    }
+    settingsBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setSettingsOpen(settingsPanel.hidden);
+    });
+    document.addEventListener('click', (event) => {
+      if (settingsPanel.hidden) return;
+      if (settingsPanel.contains(event.target) || settingsBtn.contains(event.target)) return;
+      if (event.target.closest && event.target.closest('.popover')) return;
+      setSettingsOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setSettingsOpen(false);
+    });
   </script>
 </body>
 </html>
