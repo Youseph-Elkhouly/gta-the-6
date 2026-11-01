@@ -1,16 +1,16 @@
 # Graph Report - gta-the-6  (2026-11-01)
 
 ## Corpus Check
-- 46 files · ~286,614 words
+- 47 files · ~288,062 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 307 nodes · 498 edges · 19 communities (17 shown, 2 thin omitted)
+- 319 nodes · 511 edges · 20 communities (18 shown, 2 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a0ac1107`
+- Built from commit: `47ef7e47`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -31,6 +31,7 @@
 - verify_aerial.mjs
 - verify_browser.mjs
 - verify_walk.mjs
+- GTA: THE 6 — Agent Handoff
 
 ## God Nodes (most connected - your core abstractions)
 1. `compilerOptions` - 15 edges
@@ -40,9 +41,9 @@
 5. `CollisionGrid` - 10 edges
 6. `GTA: THE 6 — Phase 1: Toronto 3D World` - 10 edges
 7. `process_buildings()` - 9 edges
-8. `BuildingFeature` - 9 edges
-9. `buildBuildings()` - 8 edges
-10. `Hud` - 8 edges
+8. `buildRoads()` - 9 edges
+9. `BuildingFeature` - 9 edges
+10. `buildBuildings()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `BuildingWorld` --references--> `CollisionGrid`  [EXTRACTED]
@@ -59,7 +60,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (19 total, 2 thin omitted)
+## Communities (20 total, 2 thin omitted)
 
 ### Community 0 - "main.ts"
 Cohesion: 0.09
@@ -83,7 +84,7 @@ Nodes (16): WorldData, addCollider(), buildBuildings(), buildingCentroid(), Buil
 
 ### Community 5 - "roads.ts"
 Cohesion: 0.14
-Nodes (20): buildEnvironment(), EnvRig, asphaltMaterial(), buildRoads(), laneMarkingMaterial(), PATH_CLASSES, pathMaterial(), ribbon() (+12 more)
+Nodes (21): buildEnvironment(), EnvRig, asphaltMaterial(), buildRoads(), laneMarkingMaterial(), PATH_CLASSES, pathMaterial(), ribbon() (+13 more)
 
 ### Community 6 - "process_data.py"
 Cohesion: 0.14
@@ -94,8 +95,8 @@ Cohesion: 0.10
 Nodes (20): DOM, DOM.Iterable, ES2020, src, compilerOptions, allowImportingTsExtensions, isolatedModules, lib (+12 more)
 
 ### Community 8 - "manifest.json"
-Cohesion: 0.11
-Nodes (18): area, boundsLocal, boundsLonLat, centerLat, centerLon, sizeM, attribution, chunkSizeM (+10 more)
+Cohesion: 0.10
+Nodes (19): area, boundsLocal, boundsLonLat, centerLat, centerLon, sizeM, attribution, chunkSizeM (+11 more)
 
 ### Community 9 - "config.py"
 Cohesion: 0.14
@@ -117,8 +118,12 @@ Nodes (3): LandmarkDebug, LandmarkDebugEntry, LandmarkWorld
 Cohesion: 0.40
 Nodes (4): CAM, errors, PITCH, YAW
 
+### Community 19 - "GTA: THE 6 — Agent Handoff"
+Cohesion: 0.18
+Nodes (10): Commands, Contribution guidance, Current checkout state (2026-11-01), Data and asset licenses, Data pipeline, GTA: THE 6 — Agent Handoff, Outstanding work / known blockers, Project goal (+2 more)
+
 ## Knowledge Gaps
-- **91 isolated node(s):** `name`, `private`, `version`, `type`, `description` (+86 more)
+- **99 isolated node(s):** `name`, `private`, `version`, `type`, `description` (+94 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -126,9 +131,9 @@ Nodes (4): CAM, errors, PITCH, YAW
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `CollisionGrid` connect `main.ts` to `index.ts`, `buildings.ts`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **What connects `name`, `private`, `version` to the rest of the system?**
-  _91 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _99 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `main.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.08502024291497975 - nodes in this community are weakly interconnected._
 - **Should `GTA: THE 6 — Phase 1: Toronto 3D World` be split into smaller, more focused modules?**
@@ -138,4 +143,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `buildings.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.1455026455026455 - nodes in this community are weakly interconnected._
 - **Should `roads.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.13538461538461538 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.14153846153846153 - nodes in this community are weakly interconnected._

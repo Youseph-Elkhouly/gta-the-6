@@ -1,9 +1,7 @@
 import * as THREE from "three";
 
-// Procedural, canvas-generated textures — keeps the app self-contained (no image
-// files to download or ship) while still giving surfaces real detail: noisy
-// asphalt with a matching normal map, concrete for ground/sidewalks, and a
-// tiling normal map for the lake water.
+// Local ambientCG maps provide asphalt/concrete PBR detail; the water normal is
+// generated in a canvas so the lake has no remote asset dependency.
 
 function makeCanvas(size: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement("canvas");
@@ -12,38 +10,13 @@ function makeCanvas(size: number): [HTMLCanvasElement, CanvasRenderingContext2D]
   return [c, ctx];
 }
 
-// Value-noise-ish speckle: fill with a base colour then splatter many
-// semi-transparent dots of nearby shades. Cheap and tileable enough at distance.
-function speckle(
-  ctx: CanvasRenderingContext2D,
-  size: number,
-  base: [number, number, number],
-  spread: number,
-  count: number,
-): void {
-  ctx.fillStyle = `rgb(${base[0]},${base[1]},${base[2]})`;
-  ctx.fillRect(0, 0, size, size);
-  for (let i = 0; i < count; i++) {
-    const d = (Math.random() - 0.5) * 2 * spread;
-    const r = Math.max(0, Math.min(255, base[0] + d));
-    const g = Math.max(0, Math.min(255, base[1] + d));
-    const b = Math.max(0, Math.min(255, base[2] + d));
-    const a = 0.04 + Math.random() * 0.12;
-    ctx.fillStyle = `rgba(${r | 0},${g | 0},${b | 0},${a})`;
-    const x = Math.random() * size;
-    const y = Math.random() * size;
-    const s = 1 + Math.random() * 2.5;
-    ctx.fillRect(x, y, s, s);
-  }
-}
-
 export interface SurfaceTextures {
   map: THREE.Texture;
   normalMap: THREE.Texture;
   roughnessMap?: THREE.Texture;
 }
 
-function loadTiledTexture(path: string, colorSpace = THREE.NoColorSpace): THREE.Texture {
+function loadTiledTexture(path: string, colorSpace: THREE.ColorSpace = THREE.NoColorSpace): THREE.Texture {
   const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}textures/${path}`);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = colorSpace;

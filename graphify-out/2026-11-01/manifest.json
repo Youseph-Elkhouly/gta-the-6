@@ -5,17 +5,17 @@
     "semantic_hash": ""
   },
   "public/data/buildings.json": {
-    "mtime": 1793555048.9734359,
-    "ast_hash": "5b3d4efc507f6c6d7b189151094ca83f",
+    "mtime": 1793560775.6365168,
+    "ast_hash": "94e202f180f1060c1dc84882998d694d",
     "semantic_hash": ""
   },
   "public/data/manifest.json": {
-    "mtime": 1793555048.977477,
-    "ast_hash": "044cc4aff2908b2de4cb60f02a69b7fd",
+    "mtime": 1793560775.6405709,
+    "ast_hash": "231310ea790f19ef67b14b39adb4d707",
     "semantic_hash": ""
   },
   "public/data/roads.json": {
-    "mtime": 1793555048.9773824,
+    "mtime": 1793560775.6404824,
     "ast_hash": "8e35c981f92d279c42a6c4c01e4330d1",
     "semantic_hash": ""
   },
@@ -25,8 +25,8 @@
     "semantic_hash": ""
   },
   "scripts/config.py": {
-    "mtime": 1793555029.6650567,
-    "ast_hash": "951aaa54b2162d23b43aecdf4c679af5",
+    "mtime": 1793560760.0889325,
+    "ast_hash": "ce0f4764ce3bac3ca2f85225e6440738",
     "semantic_hash": ""
   },
   "scripts/download_data.py": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "scripts/process_data.py": {
-    "mtime": 1793558487.466478,
-    "ast_hash": "0f598515834b07c4cbcb78f6b0869f08",
+    "mtime": 1793560763.2035112,
+    "ast_hash": "516f2e063a304b56ffb5fd50a467af2e",
     "semantic_hash": ""
   },
   "scripts/verify_aerial.mjs": {
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "src/main.ts": {
-    "mtime": 1793558803.8996255,
-    "ast_hash": "96eb0bee822bd2c4e5ad635ea9f46c97",
+    "mtime": 1793560764.735977,
+    "ast_hash": "ecd60f561a5c9da5131deacee17fa505",
     "semantic_hash": ""
   },
   "src/materials/facade.ts": {
@@ -165,8 +165,8 @@
     "semantic_hash": ""
   },
   "src/roads.ts": {
-    "mtime": 1793558897.4933708,
-    "ast_hash": "85325bc8b63cf8dac7e5f4a067e1f52d",
+    "mtime": 1793560649.005904,
+    "ast_hash": "6c9c1f0da491748216e55cbd637038f7",
     "semantic_hash": ""
   },
   "src/sky.ts": {
@@ -180,13 +180,13 @@
     "semantic_hash": ""
   },
   "src/textures.ts": {
-    "mtime": 1793558895.6849878,
-    "ast_hash": "769e60fdc38f7624bcb438be8369510a",
+    "mtime": 1793560559.228681,
+    "ast_hash": "0a6069987251febea1483ac1530123c1",
     "semantic_hash": ""
   },
   "src/types.ts": {
-    "mtime": 1793558505.5850813,
-    "ast_hash": "dc463121cdd748d0a392262cf87ddf79",
+    "mtime": 1793560761.5093474,
+    "ast_hash": "ad7a2ebbfef5a69b19f3bed579a7c70b",
     "semantic_hash": ""
   },
   "src/vite-env.d.ts": {
@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1793557612.7872589,
-    "ast_hash": "0a342cada639fba4f3a1dabfab69eefa",
+    "mtime": 1793560767.0897915,
+    "ast_hash": "579dbbbbf5ecafea41897572704c9ac4",
     "semantic_hash": ""
   },
   "data/ATTRIBUTION.md": {
@@ -282,6 +282,16 @@
   "public/textures/concrete-roughness.jpg": {
     "mtime": 1793558772.9185898,
     "ast_hash": "75dc921efe95d1968d844cf0a1005b66",
+    "semantic_hash": ""
+  },
+  "public/data/sources.json": {
+    "mtime": 1793560775.6233075,
+    "ast_hash": "5b32dd1acbbdb1833faf2c13e82e92e9",
+    "semantic_hash": ""
+  },
+  "AGENT_HANDOFF.md": {
+    "mtime": 1793560769.7699337,
+    "ast_hash": "9c1e7c5efbfa6a8c855ae359bca5c079",
     "semantic_hash": ""
   }
 }

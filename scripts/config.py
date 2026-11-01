@@ -25,11 +25,13 @@ AREA_CENTER_LON = -79.3888
 AREA_SIZE_M = 700.0
 
 # Player spawn offset from the CN Tower, in local metres (+x east, +z south).
-# The tower footprint is ~47 m wide, so we drop the player into the open plaza
-# just south-east of it (Roundhouse Park) facing north — you see the whole tower
-# and the skyline behind it instead of spawning embedded in the structure.
-SPAWN_OFFSET_X = 6.0
-SPAWN_OFFSET_Z = 62.0
+# Spawn on the Bremner Boulevard sidewalk southeast of the tower so the first
+# view includes the street grid rather than opening in the middle of Roundhouse
+# Park. The point is ~5 m off the road centreline and clear of building footprints.
+SPAWN_OFFSET_X = 34.0
+SPAWN_OFFSET_Z = 96.0
+# Player/camera heading in radians; negative yaw aims northeast along Bremner.
+SPAWN_YAW = -0.88
 
 # Extra margin (metres) fetched around the clip box for raw downloads, so
 # linear features (roads) are not truncated right at the boundary.

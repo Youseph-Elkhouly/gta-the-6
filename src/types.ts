@@ -10,7 +10,7 @@ export interface Manifest {
     boundsLocal: [number, number, number, number]; // minX, minZ, maxX, maxZ
     boundsLonLat: [number, number, number, number];
   };
-  spawn: { x: number; z: number };
+  spawn: { x: number; z: number; yaw?: number };
   chunkSizeM: number;
   counts: { buildings: number; roads: number };
   attribution: string[];
