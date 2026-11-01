@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite",
     "city": "node city/tools/dev-server.mjs",
-    "build": "tsc && vite build",
+    "build": "node city/tools/build-site.mjs && node --input-type=module -e \"import fs from 'node:fs'; fs.rmSync('dist',{recursive:true,force:true}); fs.cpSync('city/dist','dist',{recursive:true});\"",
+    "build:explorer": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "data:download": "python3 scripts/download_data.py",
