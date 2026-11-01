@@ -95,7 +95,9 @@ export function makeAsphaltTextures(): SurfaceTextures {
 export function makeConcreteTexture(): THREE.CanvasTexture {
   const size = 256;
   const [canvas, ctx] = makeCanvas(size);
-  speckle(ctx, size, [90, 94, 99], 16, 7000);
+  // Light warm concrete so it reads as pavement, not dark asphalt, when it
+  // multiplies the ground/sidewalk material colour.
+  speckle(ctx, size, [178, 172, 160], 14, 7000);
   const tex = new THREE.CanvasTexture(canvas);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;

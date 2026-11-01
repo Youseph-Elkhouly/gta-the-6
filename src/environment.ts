@@ -22,11 +22,11 @@ export function buildEnvironment(
   scene.environment = envMap; // sky-coloured ambient + reflections on glass/metal
 
   // --- Light atmospheric haze; only softens the far map edges ---
-  const fogColor = new THREE.Color(0xaec6e4);
-  scene.fog = new THREE.Fog(fogColor, 650, 2800);
+  const fogColor = new THREE.Color(0xc2d4e8);
+  scene.fog = new THREE.Fog(fogColor, 900, 3600);
 
   // --- Lighting: the sun (shadow caster) aligned to the sky; IBL does the fill ---
-  const sun = new THREE.DirectionalLight(0xfff6e8, 2.6);
+  const sun = new THREE.DirectionalLight(0xfff1d6, 3.2);
   sun.position.copy(sunPosition).multiplyScalar(600);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -42,8 +42,9 @@ export function buildEnvironment(
   scene.add(sun);
   scene.add(sun.target);
 
-  // A touch of sky-blue hemisphere + ambient on top of IBL to lift deep shadows.
-  const hemi = new THREE.HemisphereLight(0xbfd4ef, 0x55585c, 0.35);
+  // A touch of hemisphere light on top of IBL to lift deep shadows; warm ground
+  // bounce keeps the shadowed sides from going cold/blue-grey.
+  const hemi = new THREE.HemisphereLight(0xcfe0f2, 0x6b6052, 0.4);
   scene.add(hemi);
 
   // --- Flat textured ground (land). Trimmed on the south side so the lake shows. ---
@@ -62,11 +63,11 @@ export function buildEnvironment(
   const groundGeo = new THREE.PlaneGeometry(width, depth);
   groundGeo.rotateX(-Math.PI / 2);
   const groundMat = new THREE.MeshStandardMaterial({
-    color: 0x6b7078,
+    color: 0xcfc9bb, // warm light concrete/pavement (texture provides detail)
     map: concrete,
-    roughness: 0.97,
+    roughness: 0.96,
     metalness: 0.0,
-    envMapIntensity: 0.5,
+    envMapIntensity: 0.8,
   });
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.position.set((west + east) / 2, 0, (north + groundSouthEdge) / 2);

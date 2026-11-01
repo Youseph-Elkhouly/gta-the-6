@@ -39,10 +39,11 @@ async function main() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  // The physical Sky outputs very high HDR luminance, so keep exposure low
-  // (matches the three.js sky example) — otherwise the whole scene blows out white.
-  renderer.toneMappingExposure = 0.42;
+  // Neutral (Khronos PBR Neutral) tone mapping preserves saturation far better
+  // than ACES, which was washing the city to grey. Exposure kept moderate because
+  // the physical Sky is very bright HDR.
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 0.62;
   app.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();

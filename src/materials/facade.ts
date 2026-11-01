@@ -87,23 +87,51 @@ export function createFacadeMaterial(envMap: THREE.Texture): THREE.MeshStandardM
 
           // per-floor, per-building glass tint variation
           float floorId = floor(vert / floorH);
-          float gv = 0.8 + 0.35 * hash11(floorId * 1.7 + seed * 53.0);
+          float gv = 0.82 + 0.30 * hash11(floorId * 1.7 + seed * 53.0);
 
-          vec3 glassTint   = vec3(0.30, 0.44, 0.58);
-          vec3 concreteCol = vec3(0.56, 0.56, 0.54) * (0.82 + 0.3 * seed);
-          vec3 brickCol    = vec3(0.56, 0.40, 0.35) * (0.85 + 0.3 * seed);
-          vec3 facadeCol   = mix(concreteCol, glassTint * 0.95, tall);
-          facadeCol        = mix(facadeCol, brickCol, low * 0.7);
+          // two independent per-building random picks for palette variety
+          float s2 = hash11(seed * 91.7 + 3.1);
 
-          vec3 paneCol = mix(vec3(0.18, 0.26, 0.36), glassTint, 0.55) * gv;
-          vec3 roofCol = vec3(0.21, 0.22, 0.235) * (0.85 + 0.3 * seed);
+          // --- glass curtain-wall tints (towers): blue / teal / bronze / charcoal ---
+          vec3 glassTint =
+              seed < 0.42 ? vec3(0.16, 0.34, 0.52) :   // blue
+              seed < 0.70 ? vec3(0.13, 0.40, 0.36) :   // teal / green
+              seed < 0.88 ? vec3(0.42, 0.31, 0.15) :   // bronze / gold
+                            vec3(0.11, 0.13, 0.16);    // charcoal / black glass
+
+          // --- concrete / office spandrel: warm beige, cool grey, light stone ---
+          vec3 concreteCol =
+              s2 < 0.40 ? vec3(0.66, 0.58, 0.45) :     // warm beige
+              s2 < 0.74 ? vec3(0.54, 0.56, 0.58) :     // cool grey
+                          vec3(0.76, 0.73, 0.64);      // light stone
+
+          // --- brick / masonry (low-rise): red brick, brown, buff ---
+          vec3 brickCol =
+              s2 < 0.45 ? vec3(0.58, 0.29, 0.22) :     // red brick
+              s2 < 0.80 ? vec3(0.47, 0.35, 0.26) :     // brown
+                          vec3(0.72, 0.58, 0.38);      // buff / sandstone
+
+          // Architectural category from height: tall=glass, low=masonry, else office.
+          vec3 facadeCol = mix(concreteCol, glassTint, tall);
+          facadeCol      = mix(facadeCol, brickCol, low);
+
+          // glass panes: tinted, a bit darker than the spandrel, and reflective
+          vec3 paneCol = (glassTint * 0.9 + 0.06) * gv;
+          // masonry "windows" are dark recessed glass, not mirror glass
+          paneCol = mix(paneCol, vec3(0.10, 0.12, 0.15) * gv, low);
+
+          vec3 roofCol = mix(vec3(0.33, 0.31, 0.28), vec3(0.17, 0.18, 0.19), step(0.5, s2))
+                         * (0.85 + 0.3 * seed);
 
           vec3 col = mix(mix(facadeCol, paneCol, pane), roofCol, roofMask);
           diffuseColor.rgb *= col;
 
-          // glass panes: smooth + reflective; frames/spandrel/roof: matte
-          gFacadeRough = mix(mix(0.82, 0.08, pane), 0.95, roofMask);
-          gFacadeMetal = mix(mix(0.0, mix(0.35, 0.9, tall), pane), 0.0, roofMask);
+          // glass panes: smooth + reflective; frames/spandrel/roof: matte.
+          // Masonry windows are less mirror-like than curtain-wall glass.
+          float paneMetal = pane * mix(mix(0.25, 0.85, tall), 0.1, low);
+          float paneRough = mix(mix(0.80, 0.10, pane * (1.0 - low)), 0.92, roofMask);
+          gFacadeRough = paneRough;
+          gFacadeMetal = mix(paneMetal, 0.0, roofMask);
         }`,
       )
       .replace(
