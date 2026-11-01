@@ -354,7 +354,7 @@ function createTourGuide({ scene, controllerManager, cameraSystem, mapSystem, tr
   function requestLocation({ live = false } = {}) {
     if (locPrompt) locPrompt.hidden = true;
     if (!hasGeo) return locMessage('Location unavailable', 'This browser can’t share its location.');
-    if (!window.isSecureContext) return locMessage('Location needs a secure page', 'Open Slop Toronto over https (or localhost) to use your real location.');
+    if (!window.isSecureContext) return locMessage('Location needs a secure page', 'Open GTA: The 6 over https (or localhost) to use your real location.');
     setLocBusy(true);
     const opts = { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 };
     const fail = (err) => {

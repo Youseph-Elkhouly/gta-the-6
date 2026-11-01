@@ -1,6 +1,6 @@
 # Credits
 
-Slop Toronto is downtown Toronto and the waterfront in 3D, in the browser. The project's own code is under the MIT
+GTA: The 6 is downtown Toronto and the waterfront in 3D, in the browser. The project's own code is under the MIT
 License (`LICENSE`). Third-party code, data and assets keep their own licences, listed here.
 
 ## Engine and code
@@ -192,7 +192,7 @@ License (`LICENSE`). Third-party code, data and assets keep their own licences, 
 
 ## Not affiliated
 
-Slop Toronto is a fan project. It is not affiliated with or endorsed by the City of Toronto, the landmarks shown or
+GTA: The 6 is a fan project. It is not affiliated with or endorsed by the City of Toronto, the landmarks shown or
 their owners. Storefront signs show shops' names, not their trademarked logos. The screenshots on the landing page are
 from the app itself.
 # City Open Data additions

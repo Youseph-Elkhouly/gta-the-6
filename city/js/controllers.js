@@ -222,6 +222,11 @@ class ThirdPersonControllerManager {
       cyclist: this.createCyclistEntity(),
       helicopter: this.createHelicopterEntity()
     };
+    this._baseEntities = { ...this.entities };
+    this.worldVehicles = new Map();
+    this.activeVehicle = null;
+    this.vehicleState = 'ON_FOOT';
+    this._vehicleSerial = 0;
     // whatever the car runs into (buildings here; traffic & pedestrians in traffic.js) damages it (CRASH)
     this.entities.car.takeHit = (speed) => this.damageCar(speed);
 
@@ -250,7 +255,7 @@ class ThirdPersonControllerManager {
       backward: ['KeyS', 'ArrowDown'],
       left: ['KeyA', 'ArrowLeft'],
       right: ['KeyD', 'ArrowRight'],
-      up: ['Space', 'KeyE'],
+      up: ['Space'],
       down: ['KeyQ', 'KeyC'],
       boost: ['ShiftLeft', 'ShiftRight']
     };
@@ -264,7 +269,7 @@ class ThirdPersonControllerManager {
       const action = actionsByCode.get(e.code);
       if (!action || (isDown && (isTypingInField(e) || window.CITY.uiOverlay || window.CITY.cameoTalk))) return;
       if (isDown && e.repeat && !this._pressedCodes.has(e.code)) return;
-      if (e.code === 'KeyE' && this.activeMode !== 'helicopter') return; // ground E is passenger interaction
+      if (e.code === 'KeyE') return; // E is handled by the shared world vehicle interaction in main.js.
       if (isDown) this._pressedCodes.add(e.code);
       else this._pressedCodes.delete(e.code);
       // Releasing one binding must not cancel another key held for the same action.
@@ -326,11 +331,41 @@ class ThirdPersonControllerManager {
 
   setMode(mode) {
     if (!this.entities[mode]) return;
+    const previousVehicle = this.activeVehicle;
+    if (mode === 'person' && previousVehicle) {
+      previousVehicle.occupied = false;
+      previousVehicle.owner = null;
+      this.activeVehicle = null;
+    }
     this.activeMode = mode;
+    this.vehicleState = mode === 'person' ? 'ON_FOOT' : 'DRIVING';
+    this.setAvatarVisible(mode === 'person');
+    for (const kind of ['car', 'cyclist', 'helicopter']) {
+      const e = this.entities[kind];
+      const retained = [...(this.worldVehicles?.values?.() || [])].some((v) => v.entity === e);
+      if (e?.mesh) e.mesh.visible = kind === mode || retained;
+    }
     const car = this.entities.car;
     if (mode !== 'car' && car?.carState) car.carState.value.x = car.carState.value.w = 0;
     // a wrecked car restarts where this drive began
     if (mode === 'car') this.entities.car.home = { x: this.entities.car.position.x, z: this.entities.car.position.z, heading: this.entities.car.heading };
+  }
+
+  setAvatarVisible(visible) {
+    const person = this.entities.person;
+    if (!person) return;
+    if (person.mesh) person.mesh.visible = visible;
+    person._charHidden = !visible;
+    if (person.crowd?.meshes) {
+      // The skinned avatar is rendered by its own crowd meshes, outside PlayerPerson's root group. Hiding only the
+      // root leaves a standing copy behind when the player enters a vehicle.
+      for (const mesh of person.crowd.meshes) mesh.visible = visible;
+    }
+    if (!visible && person.crowd) {
+      person.crowd.begin();
+      person.crowd.end();
+      for (const mesh of person.crowd.meshes || []) mesh.visible = false;
+    }
   }
 
   // User mode changes travel with the player. Internal setMode calls still select saved entities without moving them.
@@ -356,15 +391,174 @@ class ThirdPersonControllerManager {
     return this.entities[this.activeMode];
   }
 
+  summonVehicle(type, trafficSystem) {
+    if (!['car', 'cyclist', 'helicopter'].includes(type) || this.suspended) {
+      return { ok: false, message: 'Get out and stand on foot before summoning a vehicle.' };
+    }
+    const old = [...this.worldVehicles.values()].find((v) => v.source === 'summoned' && v.type === type);
+    if (old && old.occupied) return { ok: false, message: 'Exit the currently occupied vehicle first.' };
+    if (this.activeMode !== 'person') return { ok: false, message: 'Get out and stand on foot before summoning a vehicle.' };
+
+    const person = this.entities.person;
+    const heading = person.heading;
+    const offsets = [7, -7, 10, -10, 14, -14, 18, -18].map((d) => ({
+      x: person.position.x + Math.sin(heading) * d,
+      z: person.position.z + Math.cos(heading) * d
+    }));
+    let destination = null;
+    const previousMode = this.activeMode;
+    this.activeMode = type;
+    try {
+      for (const origin of offsets) {
+        const probeY = type === 'helicopter' ? this.getGroundHeight(origin.x, origin.z, type, person.position.y) + 0.35 : person.position.y;
+        const p = this.findTeleportPosition(origin.x, origin.z, heading, probeY, false, true);
+        if (!p) continue;
+        const distance = Math.hypot(p.x - person.position.x, p.z - person.position.z);
+        if (distance < 4.5 || distance > 36) continue;
+        const clearance = type === 'helicopter' ? 12 : 6;
+        if ([...(this.worldVehicles?.values?.() || [])].some((v) => v !== old && Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) < clearance)) continue;
+        if (trafficSystem?.vehicleSpawnClear && !trafficSystem.vehicleSpawnClear(p.x, p.z, type === 'helicopter' ? 7.5 : type === 'car' ? 3.2 : 1.5)) continue;
+        const y = this.getGroundHeight(p.x, p.z, type, person.position.y) + (type === 'helicopter' ? 0.35 : 0);
+        destination = { ...p, y };
+        break;
+      }
+    } finally { this.activeMode = previousMode; }
+    if (!destination) return { ok: false, message: 'No clear place nearby to spawn that vehicle.' };
+
+    if (old) {
+      this.scene.remove(old.entity.mesh);
+      this.worldVehicles.delete(old.id);
+    }
+    const entity = type === 'car' ? this.createCarEntity() : type === 'cyclist' ? this.createCyclistEntity() : this.createHelicopterEntity();
+    const id = `summoned-${type}-${++this._vehicleSerial}`;
+    entity.position.set(destination.x, destination.y, destination.z);
+    entity.heading = heading;
+    entity.speed = 0;
+    entity.mesh.position.copy(entity.position);
+    entity.mesh.rotation.y = heading;
+    entity.mesh.visible = true;
+    const baseEntity = this._baseEntities[type];
+    if (baseEntity && baseEntity !== entity) baseEntity.mesh.visible = false;
+    entity.mesh.traverse((child) => { if (child.isMesh) child.castShadow = child.receiveShadow = true; });
+    entity.source = 'summoned';
+    entity.vehicleId = id;
+    if (type === 'car') entity.takeHit = (speed) => this.damageCar(speed);
+    const record = { id, type, source: 'summoned', entity, occupied: false, owner: null };
+    this.worldVehicles.set(id, record);
+    for (const other of this.worldVehicles.values()) {
+      if (other !== record && Math.hypot(other.entity.position.x - entity.position.x, other.entity.position.z - entity.position.z) < (type === 'helicopter' ? 12 : 6)) {
+        this.scene.remove(entity.mesh); this.worldVehicles.delete(id);
+        return { ok: false, message: 'A vehicle is already parked in that spot.' };
+      }
+    }
+    return { ok: true, vehicle: record };
+  }
+
+  enterVehicle(record) {
+    if (!record || record.occupied || this.activeMode !== 'person' || this.suspended) return false;
+    this.vehicleState = 'ENTERING';
+    const entity = record.entity;
+    this.entities[record.type] = entity;
+    this.activeVehicle = record;
+    record.occupied = true;
+    record.owner = 'player';
+    const person = this.entities.person;
+    person.speed = 0;
+    person.mesh.visible = false;
+    this.activeMode = record.type;
+    this.setMode(record.type);
+    this.resetInput();
+    this.vehicleState = 'DRIVING';
+    return true;
+  }
+
+  isHelicopterGroundedAndStopped(vehicle = this.activeVehicle?.entity) {
+    if (!vehicle) return false;
+    const ground = this.getGroundHeight(vehicle.position.x, vehicle.position.z, 'helicopter', vehicle.position.y);
+    const heightAboveGround = vehicle.position.y - ground;
+    // The HUD displays rounded km/h. Use the same threshold, so a displayed 0 km/h is a stopped helicopter.
+    const displayedSpeedKmh = Math.round(Math.abs(vehicle.speed || 0) * 3.6);
+    return heightAboveGround <= 0.8 && displayedSpeedKmh === 0;
+  }
+
+  exitVehicle(trafficSystem = null) {
+    const record = this.activeVehicle;
+    if (!record || this.vehicleState !== 'DRIVING') return { ok: false, message: 'You are not in a vehicle.' };
+    const vehicle = record.entity;
+    if (record.type === 'helicopter' && !this.isHelicopterGroundedAndStopped(vehicle))
+      return { ok: false, message: 'Land and come to a stop before exiting.' };
+    this.vehicleState = 'EXITING';
+    const side = vehicle.heading + Math.PI / 2;
+    const px = vehicle.position.x + Math.sin(side) * (record.type === 'helicopter' ? 7 : 3.2);
+    const pz = vehicle.position.z + Math.cos(side) * (record.type === 'helicopter' ? 7 : 3.2);
+    const oldMode = this.activeMode;
+    this.activeMode = 'person';
+    let safe;
+    const isClearExit = (p) => p &&
+      !(trafficSystem?.vehicleSpawnClear && !trafficSystem.vehicleSpawnClear(p.x, p.z, 0.25)) &&
+      ![...this.worldVehicles.values()].some((v) => v !== record && Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) < 2.2);
+    try {
+      const preferred = this.findTeleportPosition(px, pz, vehicle.heading, vehicle.position.y, false, true, vehicle);
+      if (isClearExit(preferred)) safe = preferred;
+      // If traffic or another parked vehicle occupies the nearest sidewalk, try clear spots around the vehicle before
+      // refusing an otherwise safe dismount. This matters most for the helicopter's wider landing footprint.
+      if (!safe) {
+        const radius = record.type === 'helicopter' ? 8 : 3.8;
+        for (const distance of [radius, radius + 2, radius + 4, radius + 7, radius + 11]) {
+          for (let i = 0; i < 16; i++) {
+            const angle = (Math.PI * 2 * i) / 16;
+            const p = this.findTeleportPosition(vehicle.position.x + Math.sin(angle) * distance,
+              vehicle.position.z + Math.cos(angle) * distance, vehicle.heading, vehicle.position.y, true, false, vehicle);
+            if (isClearExit(p)) { safe = p; break; }
+          }
+          if (safe) break;
+        }
+      }
+    }
+    finally { this.activeMode = oldMode; }
+    if (!safe) { this.vehicleState = 'DRIVING'; return { ok: false, message: 'There is no safe place to get out here.' }; }
+    vehicle.speed = 0;
+    if ('vx' in vehicle) vehicle.vx = vehicle.vz = vehicle.angularVel = 0;
+    if (record.type === 'helicopter') vehicle.verticalSpeed = 0;
+    this.activeMode = 'person';
+    this.teleportActiveTo(safe.x, safe.z, vehicle.heading, safe.y, false, vehicle);
+    this.setAvatarVisible(true);
+    record.occupied = false;
+    record.owner = null;
+    this.activeVehicle = null;
+    this.resetInput();
+    this.vehicleState = 'ON_FOOT';
+    return { ok: true };
+  }
+
+  adoptTrafficCar(trafficSystem, candidate) {
+    if (this.activeMode !== 'person' || this.suspended || !candidate) return null;
+    const claimed = trafficSystem?.claimDrivableCar?.(candidate.id);
+    if (!claimed) return null;
+    const entity = this.createCarEntity({ bodyType: claimed.bodyType, paint: claimed.paint });
+    entity.position.set(claimed.x, claimed.y, claimed.z);
+    entity.heading = claimed.heading;
+    entity.speed = claimed.speed;
+    entity.mesh.position.copy(entity.position);
+    entity.mesh.rotation.y = entity.heading;
+    entity.mesh.traverse((child) => { if (child.isMesh) child.castShadow = child.receiveShadow = true; });
+    const id = `jacked-${claimed.id}`;
+    entity.source = 'traffic'; entity.vehicleId = id;
+    entity.takeHit = (speed) => this.damageCar(speed);
+    const record = { id, type: 'car', source: 'traffic', entity, occupied: false, owner: null };
+    this.worldVehicles.set(id, record);
+    return record;
+  }
+
   // savedAltitude also selects the current deck for ground arrivals; flight defaults to a safe 92 m or more.
   // nearby: if (x, z) isn't clear, the nearest clear ground at its level (findTeleportPosition)
-  teleportActiveTo(x, z, heading = Math.PI, savedAltitude = null, nearby = false) {
+  teleportActiveTo(x, z, heading = Math.PI, savedAltitude = null, nearby = false, ignoreEntity = null) {
     const ent = this.getActiveEntity();
     this.resetInput();
     if (!Number.isFinite(heading)) heading = ent.heading;
     const heli = this.activeMode === 'helicopter';
     const altitude = heli ? Math.max(0.25, Math.min(380, savedAltitude ?? Math.max(92, ent.position.y))) : savedAltitude;
-    const destination = this.findTeleportPosition(x, z, heading, altitude, false, nearby);
+    const destination = this.findTeleportPosition(x, z, heading, altitude, false, nearby, ignoreEntity);
     if (destination) {
       ent.position.x = destination.x;
       ent.position.z = destination.z;
@@ -405,7 +599,7 @@ class ThirdPersonControllerManager {
   // exact: only (x, z) itself (null if it isn't clear), no search round it
   // nearby (getting off or on, beside a vehicle): first the nearest clear ground within NEAR_REACH at the level of
   // (x, z)'s, a walker's off the roadway wherever a sidewalk in that reach is clear; then the rings as before
-  findTeleportPosition(x, z, heading, altitude, exact = false, nearby = false) {
+  findTeleportPosition(x, z, heading, altitude, exact = false, nearby = false, ignoreEntity = null) {
     if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
     if (this.interiorSpace && this.activeMode === 'person') {
       const point = this.interiorSpace.constrain({ x, z, y: altitude }, 0.5);
@@ -420,7 +614,7 @@ class ThirdPersonControllerManager {
     const entity = this.getActiveEntity();
     // Conservative body cylinders, including the taxi's corners, bicycle wheels and helicopter tail/rotor.
     const body = { person: [0.48, 1.9], car: [2.4, 1.9], cyclist: [1.0, 1.9], helicopter: [6.2, 3.2] };
-    const others = Object.values(this.entities).filter(e => e !== entity).map(e => ({
+    const others = Object.values(this.entities).filter(e => e !== entity && e !== ignoreEntity).map(e => ({
       x: e.position.x, z: e.position.z, radius: body[e.type][0],
       bottom: e.position.y - (e.type === 'helicopter' ? 0.7 : 0), top: e.position.y + body[e.type][1]
     }));
@@ -576,15 +770,18 @@ class ThirdPersonControllerManager {
   // =========================================================================
   // 2. CAR (3D LOFTED SCULPTED SEDAN, A DEEP RED)
   // =========================================================================
-  createCarEntity() {
+  createCarEntity(options = {}) {
     const root = new THREE.Group();
-    root.name = 'PlayerTaxiCar';
+    root.name = options.bodyType ? `PlayerCar-${options.bodyType}` : 'PlayerTaxiCar';
 
     const chassisPivot = new THREE.Group();
     root.add(chassisPivot);
 
-    const spec = BODY_SPECS.sedan;
-    const taxiLoftMat = createLoftedCarMaterial(spec, 0x9e1b22);
+    const bodyType = BODY_SPECS[options.bodyType] ? options.bodyType : 'sedan';
+    const spec = BODY_SPECS[bodyType];
+    const paint = Array.isArray(options.paint) ? options.paint : null;
+    const paintHex = paint ? (Math.round(paint[0] * 255) << 16) | (Math.round(paint[1] * 255) << 8) | Math.round(paint[2] * 255) : 0x9e1b22;
+    const taxiLoftMat = createLoftedCarMaterial(spec, paintHex);
 
     // 1. 3D Lofted Taxi Body + Curved Windscreens + Crowned Roof + Side Mirrors + Roof Sign
     const carBodyGeo = buildCarGeometry(spec, false);
@@ -649,6 +846,7 @@ class ThirdPersonControllerManager {
 
     return {
       type: 'car',
+      bodyType,
       label: 'Car',
       mesh: root,
       chassisPivot,
@@ -1195,7 +1393,7 @@ class ThirdPersonControllerManager {
     const far = (e) => !!focus && (e.position.x - focus.x) ** 2 + (e.position.z - focus.z) ** 2 > POSE_RANGE * POSE_RANGE;
 
     const p = this.entities.person;
-    if (this.activeMode === 'person' || !far(p)) {
+    if (this.activeMode === 'person' && !far(p)) {
       p._charHidden = false;
       const air = p.position.y - this.getGroundHeight(p.position.x, p.position.z, 'person', p.position.y);
       p.rig.update(dt, p.position.x, p.position.z, p.heading, personGround, this, air > 0.02 ? air : 0);
@@ -1276,6 +1474,15 @@ class ThirdPersonControllerManager {
       const e = this.entities[key];
       e.mesh.position.copy(e.position);
       e.mesh.rotation.y = e.heading;
+    }
+    for (const record of this.worldVehicles.values()) {
+      const e = record.entity;
+      e.mesh.position.copy(e.position);
+      e.mesh.rotation.y = e.heading;
+      if (e.type === 'helicopter' && record !== this.activeVehicle) {
+        e.mainRotorPivot.rotation.y += dt * 24.0;
+        e.tailRotorPivot.rotation.x += dt * 32.0;
+      }
     }
 
     // Modulate clustered vehicle & bike lights by time of day (off during Midday & Golden Hour; fade in at Dusk & Night)

@@ -440,6 +440,33 @@ test('leaving the car clears its brake and reverse lights', () => {
   assert.deepEqual(car.carState.value, { x: 0, w: 0 });
 });
 
+test('the crowd-rendered player avatar hides in vehicles and does not reappear until on foot', () => {
+  const { controller } = keyboardHarness();
+  let crowdAdds = 0;
+  const person = { mesh: { visible: true }, position: { x: 0, y: 0, z: 0 }, heading: 0, speed: 0,
+    rig: { update() {} }, crowd: { meshes: [{ visible: true }], begin() {}, add() { crowdAdds++; }, end() {} } };
+  const car = { type: 'car', position: { x: 0, y: 0, z: 0 }, heading: 0, speed: 0, chaseDistance: 6.9,
+    carState: { value: { x: 0, w: 0 } }, home: {} };
+  const cyclist = { position: { x: 1000, y: 0, z: 1000 }, _riderHidden: true };
+  const helicopter = { position: { x: -1000, y: 0, z: -1000 } };
+  controller.entities = { person, car, cyclist, helicopter };
+  controller.worldVehicles = new Map();
+  controller.activeMode = 'car';
+  controller.getActiveEntity = () => controller.entities[controller.activeMode];
+  controller.getGroundHeight = () => 0;
+  controller.setAvatarVisible(false);
+  controller.poseCharacters(1 / 60);
+  assert.equal(person.mesh.visible, false);
+  assert.equal(person.crowd.meshes[0].visible, false, 'the independently rendered crowd mesh stays hidden');
+  assert.equal(crowdAdds, 0, 'vehicle mode does not pose another player copy');
+  controller.activeMode = 'person';
+  controller.setAvatarVisible(true);
+  controller.poseCharacters(1 / 60);
+  assert.equal(person.mesh.visible, true);
+  assert.equal(person.crowd.meshes[0].visible, true);
+  assert.ok(crowdAdds > 0, 'the avatar is posed again on foot');
+});
+
 test('user mode changes follow the current player instead of selecting a mode left at spawn', () => {
   const { controller, ent: cyclist, key } = teleportHarness('cyclist');
   controller.entities = Object.fromEntries(['person', 'car', 'cyclist', 'helicopter'].map((mode) =>
@@ -556,11 +583,64 @@ test('st-hqa: out of a station on the bike, then off it, the walker is still wit
   assert.ok(d < 5, `walker ${d.toFixed(2)} m from the pylon`);
 });
 
-test('ground passenger interaction does not jump, while E still ascends in flight', () => {
+test('E is reserved for world vehicle enter/exit and Space remains the helicopter ascent control', () => {
   const { controller, key } = keyboardHarness();
   controller.activeMode = 'person'; key('keydown', 'KeyE'); assert.equal(controller.keys.up, false);
-  controller.activeMode = 'helicopter'; key('keydown', 'KeyE'); assert.equal(controller.keys.up, true);
-  key('keyup', 'KeyE'); assert.equal(controller.keys.up, false);
+  controller.activeMode = 'helicopter'; key('keydown', 'KeyE'); assert.equal(controller.keys.up, false);
+  key('keydown', 'Space'); assert.equal(controller.keys.up, true);
+  key('keyup', 'Space'); assert.equal(controller.keys.up, false);
+});
+
+function helicopterExitHarness({ y = 0.25, speed = 0, verticalSpeed = -0.3 } = {}) {
+  const { controller } = keyboardHarness();
+  const helicopter = { type: 'helicopter', position: { x: 0, y, z: 0 }, heading: 0, speed, verticalSpeed };
+  const person = { type: 'person', position: { x: 20, y: 0, z: 20 }, mesh: { visible: false } };
+  const record = { id: 'summoned-helicopter-1', type: 'helicopter', entity: helicopter, occupied: true, owner: 'player' };
+  controller.entities = { person, helicopter };
+  controller.activeMode = 'helicopter';
+  controller.vehicleState = 'DRIVING';
+  controller.activeVehicle = record;
+  controller.worldVehicles = new Map([[record.id, record]]);
+  controller.getGroundHeight = () => 0;
+  controller.findTeleportPosition = () => ({ x: 3, y: 0.22, z: 0 });
+  controller.teleportActiveTo = (x, z, heading, y) => {
+    Object.assign(person.position, { x, y, z });
+    person.heading = heading;
+  };
+  controller.resetInput = () => {};
+  return { controller, helicopter, person, record };
+}
+
+test('E exits a landed helicopter at 0 km/h and restores on-foot state even while settling vertically', () => {
+  const { controller, helicopter, person, record } = helicopterExitHarness({ y: 0.25, speed: 0, verticalSpeed: -0.3 });
+  assert.equal(controller.isHelicopterGroundedAndStopped(helicopter), true);
+  const result = controller.exitVehicle();
+  assert.equal(result.ok, true);
+  assert.equal(controller.activeMode, 'person');
+  assert.equal(controller.vehicleState, 'ON_FOOT');
+  assert.equal(person.mesh.visible, true);
+  assert.equal(record.occupied, false);
+  assert.equal(record.owner, null);
+  assert.equal(controller.activeVehicle, null);
+  assert.equal(helicopter.verticalSpeed, 0);
+});
+
+test('a helicopter cannot exit airborne or while the displayed speed is above 0 km/h', () => {
+  const airborne = helicopterExitHarness({ y: 2, speed: 0, verticalSpeed: 0 });
+  assert.equal(airborne.controller.exitVehicle().ok, false);
+  assert.equal(airborne.controller.activeMode, 'helicopter');
+  const moving = helicopterExitHarness({ y: 0.25, speed: 0.2, verticalSpeed: 0 });
+  assert.equal(moving.controller.exitVehicle().ok, false);
+  assert.equal(moving.controller.activeMode, 'helicopter');
+});
+
+test('a landed helicopter exit searches another nearby spot when the nearest one is blocked by traffic', () => {
+  const { controller, person } = helicopterExitHarness();
+  controller.findTeleportPosition = (x, z, heading, y, exact) => exact ? { x, y: 0.22, z } : { x: 3, y: 0.22, z: 0 };
+  const result = controller.exitVehicle({ vehicleSpawnClear: (x) => x !== 3 });
+  assert.equal(result.ok, true);
+  assert.equal(controller.activeMode, 'person');
+  assert.ok(Math.hypot(person.position.x, person.position.z) > 7, 'walker exits clear of the helicopter and passing traffic');
 });
 
 test('station interiors ground and constrain walking independently of overlapping outdoor buildings', () => {

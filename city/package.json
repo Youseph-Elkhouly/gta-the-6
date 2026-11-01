@@ -1,8 +1,8 @@
 {
-  "name": "slop-toronto",
+  "name": "gta-the-6",
   "private": true,
   "type": "module",
-  "description": "Toronto in three.js WebGPU + TSL, on the engine of Slop New York by mrdoob",
+  "description": "GTA: The 6 — downtown Toronto in Three.js WebGPU + TSL",
   "scripts": {
     "dev": "node tools/prepare-bench.mjs && node tools/dev-server.mjs",
     "build": "node tools/prepare-bench.mjs && npm run build:clouds && node tools/build-site.mjs",

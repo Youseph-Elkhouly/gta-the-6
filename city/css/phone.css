@@ -100,3 +100,6 @@
 }
 @media (max-height:620px) and (min-width:701px) { .phone-overlay { padding:10px 24px; }.phone-device { height:calc(100svh - 20px); min-height:0; } }
 @media (prefers-reduced-motion:reduce) { .phone-device,.phone-content,.phone-launcher { transition-duration:.01ms; animation-duration:.01ms; } }
+
+.vehicle-interaction-prompt { position:fixed; z-index:18; left:50%; bottom:clamp(76px,12vh,132px); transform:translateX(-50%); padding:10px 16px; border:1px solid rgba(207,231,244,.62); border-radius:7px; color:#f3f7fb; background:rgba(9,17,28,.88); box-shadow:0 5px 20px rgba(0,0,0,.35); font:700 14px/1.2 system-ui,sans-serif; letter-spacing:.02em; text-shadow:0 1px 2px #000; cursor:pointer; pointer-events:auto; }
+.vehicle-interaction-prompt[hidden] { display:none !important; }

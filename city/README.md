@@ -1,4 +1,4 @@
-# Slop Toronto
+# GTA: The 6
 
 Downtown Toronto and the waterfront in 3D, in the browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge
 along the lake to Sugar Beach, past the CN Tower and through downtown. Built with [three.js](https://threejs.org/)
