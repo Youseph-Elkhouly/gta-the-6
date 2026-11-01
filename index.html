@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%230b0e13'/><rect x='7' y='2' width='2' height='12' fill='%234a8cff'/></svg>" />
+    <title>GTA: THE 6 — Downtown Toronto Explorer</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e13; }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; }
+
+      /* Loading screen */
+      #loading {
+        position: fixed; inset: 0; z-index: 50;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 18px; background: #0b0e13; color: #cdd6e4;
+        font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        transition: opacity 0.6s ease; text-align: center; padding: 24px;
+      }
+      #loading.hidden { opacity: 0; pointer-events: none; }
+      #loading h1 { font-size: 22px; letter-spacing: 2px; font-weight: 600; color: #e8eef9; }
+      #loading .sub { color: #7d8aa0; max-width: 460px; }
+      #loading .bar { width: 260px; height: 4px; background: #1b222e; border-radius: 3px; overflow: hidden; }
+      #loading .bar > div { height: 100%; width: 0%; background: #4a8cff; transition: width 0.3s ease; }
+      #loading .status { color: #9fb0c9; min-height: 1.4em; }
+
+      /* HUD / debug overlay */
+      #hud {
+        position: fixed; top: 10px; left: 10px; z-index: 20;
+        font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #d6deeb; background: rgba(12, 16, 22, 0.66);
+        border: 1px solid rgba(120, 150, 190, 0.18); border-radius: 8px;
+        padding: 9px 12px; pointer-events: none; min-width: 190px;
+        backdrop-filter: blur(6px);
+      }
+      #hud .row { display: flex; justify-content: space-between; gap: 14px; }
+      #hud .k { color: #7d8aa0; }
+      #hud .v { color: #e8eef9; }
+      #hud #fps-v.good { color: #6fe39b; }
+      #hud #fps-v.mid  { color: #ffd166; }
+      #hud #fps-v.bad  { color: #ff7a7a; }
+
+      /* Controls help */
+      #help {
+        position: fixed; bottom: 10px; left: 10px; z-index: 20;
+        font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #9fb0c9; background: rgba(12, 16, 22, 0.6);
+        border: 1px solid rgba(120, 150, 190, 0.15); border-radius: 8px;
+        padding: 8px 11px; pointer-events: none;
+      }
+      #help b { color: #d6deeb; font-weight: 600; }
+
+      /* Building inspector panel */
+      #inspector {
+        position: fixed; top: 10px; right: 10px; z-index: 20;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #d6deeb; background: rgba(12, 16, 22, 0.78);
+        border: 1px solid rgba(120, 150, 190, 0.25); border-radius: 8px;
+        padding: 10px 13px; min-width: 210px; max-width: 280px;
+        display: none; backdrop-filter: blur(6px);
+      }
+      #inspector.visible { display: block; }
+      #inspector h2 { font-size: 12px; color: #4a8cff; margin-bottom: 6px; letter-spacing: 0.5px; }
+      #inspector .row { display: flex; justify-content: space-between; gap: 12px; }
+      #inspector .k { color: #7d8aa0; }
+      #inspector .v { color: #e8eef9; text-align: right; word-break: break-word; }
+      #inspector .hint { margin-top: 7px; color: #5f6c81; font-size: 10px; }
+
+      /* Aiming crosshair (only while the mouse is captured) */
+      #crosshair {
+        position: fixed; top: 50%; left: 50%; z-index: 15;
+        width: 6px; height: 6px; margin: -3px 0 0 -3px;
+        border-radius: 50%; background: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+        display: none; pointer-events: none;
+      }
+      #crosshair.visible { display: block; }
+
+      /* Click-to-play prompt */
+      #play-prompt {
+        position: fixed; inset: 0; z-index: 30;
+        display: none; align-items: center; justify-content: center;
+        background: rgba(6, 9, 13, 0.35); cursor: pointer;
+        pointer-events: none; /* let clicks fall through to the canvas */
+      }
+      #play-prompt.visible { display: flex; }
+      #play-prompt .box {
+        font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #e8eef9; background: rgba(12, 16, 22, 0.85);
+        border: 1px solid rgba(120, 150, 190, 0.3); border-radius: 10px;
+        padding: 18px 26px; text-align: center;
+      }
+      #play-prompt .box b { color: #4a8cff; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="loading">
+      <h1>GTA&nbsp;:&nbsp;THE&nbsp;6</h1>
+      <div class="sub">Downtown Toronto &mdash; real geometry from the City of Toronto 3D Massing dataset &amp; OpenStreetMap.</div>
+      <div class="bar"><div id="loading-bar"></div></div>
+      <div class="status" id="loading-status">Initialising&hellip;</div>
+    </div>
+
+    <div id="hud">
+      <div class="row"><span class="k">FPS</span><span class="v" id="fps-v">&mdash;</span></div>
+      <div class="row"><span class="k">Pos&nbsp;X</span><span class="v" id="pos-x">&mdash;</span></div>
+      <div class="row"><span class="k">Pos&nbsp;Z</span><span class="v" id="pos-z">&mdash;</span></div>
+      <div class="row"><span class="k">Pos&nbsp;Y</span><span class="v" id="pos-y">&mdash;</span></div>
+      <div class="row"><span class="k">Buildings</span><span class="v" id="bldg-count">&mdash;</span></div>
+      <div class="row"><span class="k">Chunk</span><span class="v" id="chunk-id">&mdash;</span></div>
+      <div class="row"><span class="k">Camera</span><span class="v" id="cam-mode">&mdash;</span></div>
+      <div class="row"><span class="k">Graphics</span><span class="v" id="gfx-q">&mdash;</span></div>
+    </div>
+
+    <div id="inspector">
+      <h2>BUILDING</h2>
+      <div class="row"><span class="k">ID</span><span class="v" id="insp-id">&mdash;</span></div>
+      <div class="row"><span class="k">Height</span><span class="v" id="insp-height">&mdash;</span></div>
+      <div class="row"><span class="k">Base elev</span><span class="v" id="insp-base">&mdash;</span></div>
+      <div class="row"><span class="k">Height src</span><span class="v" id="insp-hsrc">&mdash;</span></div>
+      <div class="row"><span class="k">Bldg src</span><span class="v" id="insp-bsrc">&mdash;</span></div>
+      <div class="row"><span class="k">Source</span><span class="v" id="insp-dataset">&mdash;</span></div>
+      <div class="hint">Click another building to inspect &middot; click empty space to clear</div>
+    </div>
+
+    <div id="help">
+      <b>WASD</b> move &nbsp; <b>Shift</b> sprint &nbsp; <b>Space</b> jump &nbsp; <b>Mouse</b> look<br />
+      <b>C</b>/<b>F</b> fly-cam &nbsp; <b>G</b> graphics &nbsp; <b>L</b> landmark debug &nbsp; <b>T</b> teleport to landmarks &nbsp; <b>Esc</b> release mouse &nbsp; <b>Click</b> inspect
+    </div>
+
+    <div id="crosshair"></div>
+
+    <div id="play-prompt">
+      <div class="box">Click to <b>capture mouse</b> and explore<br />Toronto&hellip;</div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

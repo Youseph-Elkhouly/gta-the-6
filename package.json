@@ -1,0 +1,27 @@
+{
+  "name": "gta-the-6",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GTA: THE 6 — Phase 1: an explorable, geographically accurate 3D model of downtown Toronto around the CN Tower, built with Three.js.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "data:download": "python3 scripts/download_data.py",
+    "data:process": "python3 scripts/process_data.py",
+    "data": "python3 scripts/download_data.py && python3 scripts/process_data.py",
+    "verify": "node scripts/verify_browser.mjs",
+    "verify:functional": "node scripts/verify_functional.mjs"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.169.0",
+    "puppeteer-core": "^23.11.1",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.log
+
+# Cached raw source data (large; re-downloadable via scripts/download_data.py)
+data/raw/
+
+# NOTE: the small processed browser assets (public/data/*.json, ~280 KB) ARE
+# committed so the app runs with just `npm install && npm run dev` (no Python
+# needed). Regenerate them anytime with `npm run data`.

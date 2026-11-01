@@ -1,0 +1,5 @@
+# Python dependencies for the Toronto data pipeline.
+# Intentionally minimal: pyshp is pure-Python (no GDAL/GEOS/proj build needed),
+# so it installs cleanly even on brand-new Python versions. Coordinate
+# reprojection is done with plain math in scripts/config.py.
+pyshp>=2.3,<3.2
