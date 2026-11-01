@@ -85,6 +85,7 @@ async function main() {
 
   // --- player + cameras ---
   const player = new Player(manifest.spawn.x, manifest.spawn.z);
+  player.yaw = manifest.spawn.yaw ?? 0;
   scene.add(player.object);
 
   const fly = new FlyCamera();

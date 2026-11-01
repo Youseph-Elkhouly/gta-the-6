@@ -19,7 +19,8 @@ export function buildWater(
   const geo = new THREE.PlaneGeometry(size, size);
 
   const normals = makeWaterNormals();
-  normals.repeat.set(size / 120, size / 120);
+  // Water.js samples normals in world coordinates, so texture.repeat does not
+  // affect its shader. Control the actual wave scale through the `size` uniform.
 
   const water = new Water(geo, {
     textureWidth: 512,
@@ -27,10 +28,22 @@ export function buildWater(
     waterNormals: normals,
     sunDirection: sunPosition.clone().normalize(),
     sunColor: 0xffffff,
-    waterColor: 0x15425c, // Lake Ontario blue-green
-    distortionScale: 2.6,
+    waterColor: 0x246985, // cool blue-green Lake Ontario, visible through reflections
+    distortionScale: 0.8,
     fog: scene.fog !== null,
   });
+  // The stock Water shader makes very broad, mirror-bright swells at this map
+  // scale. Bring the wavelets down to ~10–20 m and keep more of the lake's blue
+  // body color visible away from the horizon.
+  water.material.uniforms["size"].value = 7.0;
+  water.material.uniforms["distortionScale"].value = 0.8;
+  water.material.fragmentShader = water.material.fragmentShader
+    .replace("float rf0 = 0.3;", "float rf0 = 0.055;")
+    .replace(
+      "vec3 surfaceNormal = normalize( noise.xzy * vec3( 1.5, 1.0, 1.5 ) );",
+      "vec3 surfaceNormal = normalize( noise.xzy * vec3( 0.55, 1.0, 0.55 ) );",
+    );
+  water.material.needsUpdate = true;
   water.rotation.x = -Math.PI / 2;
   // Centre the plane well south of the land edge so its near shore sits at southEdge.
   water.position.set(0, -0.15, southEdge + size / 2 - 40);

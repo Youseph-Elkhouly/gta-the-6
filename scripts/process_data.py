@@ -417,6 +417,7 @@ def _spawn_local() -> dict:
     return {
         "x": round(x + config.SPAWN_OFFSET_X, 2),
         "z": round(z + config.SPAWN_OFFSET_Z, 2),
+        "yaw": config.SPAWN_YAW,
     }
 
 

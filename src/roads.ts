@@ -43,7 +43,23 @@ function pathMaterial(): THREE.MeshStandardMaterial {
   });
 }
 
-// Dashed centre-line texture (white dashes on transparent), tiled along length.
+function sidewalkMaterial(): THREE.MeshStandardMaterial {
+  const { map, normalMap, roughnessMap } = makeConcreteTextures();
+  return new THREE.MeshStandardMaterial({
+    color: 0xb4b0a7,
+    map,
+    normalMap,
+    roughnessMap,
+    normalScale: new THREE.Vector2(0.32, 0.32),
+    roughness: 0.96,
+    metalness: 0,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+  });
+}
+
+// Dashed centre-line texture (warm road paint on transparent), tiled along length.
 function laneMarkingMaterial(): THREE.MeshStandardMaterial {
   const c = document.createElement("canvas");
   c.width = 8;
@@ -76,7 +92,9 @@ function ribbon(pts: number[], width: number, y: number, vScale: number): THREE.
   const n = pts.length / 2;
   if (n < 2) return null;
   const half = width / 2;
-  const widthTiles = Math.max(width / TILE_M, 0.25);
+  // Narrow marking ribbons need to sample the whole 8px paint texture; scaling
+  // U by physical width would sample only its transparent edge.
+  const widthTiles = width < 0.5 ? 1 : Math.max(width / TILE_M, 0.25);
 
   const left: number[] = [];
   const right: number[] = [];
@@ -120,10 +138,11 @@ function ribbon(pts: number[], width: number, y: number, vScale: number): THREE.
     const R1 = [right[b], right[b + 1], right[b + 2]];
     const v0 = dist[i] / vScale;
     const v1 = dist[i + 1] / vScale;
-    // L0,R0,L1 ; R0,R1,L1
-    positions.push(...L0, ...R0, ...L1, ...R0, ...R1, ...L1);
+    // Wind faces toward +Y so the pavement is visible from above. The previous
+    // ordering pointed these triangles down, so Three.js culled the road mesh.
+    positions.push(...L0, ...L1, ...R0, ...R0, ...L1, ...R1);
     for (let k = 0; k < 6; k++) normals.push(0, 1, 0);
-    uvs.push(0, v0, widthTiles, v0, 0, v1, widthTiles, v0, widthTiles, v1, 0, v1);
+    uvs.push(0, v0, 0, v1, widthTiles, v0, widthTiles, v0, 0, v1, widthTiles, v1);
   }
 
   const geo = new THREE.BufferGeometry();
@@ -143,6 +162,7 @@ export function buildRoads(doc: RoadsDoc): RoadWorld {
   group.name = "roads";
 
   const roadGeos: THREE.BufferGeometry[] = [];
+  const sidewalkGeos: THREE.BufferGeometry[] = [];
   const pathGeos: THREE.BufferGeometry[] = [];
   const markGeos: THREE.BufferGeometry[] = [];
 
@@ -152,6 +172,13 @@ export function buildRoads(doc: RoadsDoc): RoadWorld {
     const g = ribbon(r.pts, r.width, y, TILE_M);
     if (!g) continue;
     (isPath ? pathGeos : roadGeos).push(g);
+
+    // Add a 1.25 m paved verge on each side of vehicle roads. The road surface
+    // sits above this wider concrete ribbon, leaving continuous sidewalk edges.
+    if (!isPath) {
+      const sidewalk = ribbon(r.pts, r.width + 2.5, 0.025, TILE_M);
+      if (sidewalk) sidewalkGeos.push(sidewalk);
+    }
 
     // Dashed centre line on wider vehicular roads only.
     if (!isPath && r.width >= 7) {
@@ -169,6 +196,16 @@ export function buildRoads(doc: RoadsDoc): RoadWorld {
       group.add(mesh);
     }
     for (const g of roadGeos) g.dispose();
+  }
+  if (sidewalkGeos.length) {
+    const merged = mergeGeometries(sidewalkGeos, false);
+    if (merged) {
+      const mesh = new THREE.Mesh(merged, sidewalkMaterial());
+      mesh.receiveShadow = true;
+      mesh.name = "roads-sidewalks";
+      group.add(mesh);
+    }
+    for (const g of sidewalkGeos) g.dispose();
   }
   if (pathGeos.length) {
     const merged = mergeGeometries(pathGeos, false);

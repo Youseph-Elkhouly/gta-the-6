@@ -76,7 +76,9 @@ the pointer, and click buildings to inspect them.
 
 Data flow: City shapefile/Web Mercator + OSM JSON/WGS84 → local metre coordinates
 → compact JSON → browser-side Three.js extrusion/ribbons. The local frame is
-`+x=east`, `+z=south`, origin at the configured area centre. Heights are metres;
+`+x=east`, `+z=south`, origin at the configured area centre. The current spawn is
+on the Bremner Boulevard sidewalk southeast of the CN Tower, looking northeast
+along the street. Heights are metres;
 the renderer uses Three.js Y as up. The projection helpers in
 `scripts/config.py` and `src/projection.ts` must remain inverse-compatible.
 
@@ -91,6 +93,12 @@ working tree before editing; do not reset or overwrite these changes.
   `public/data/sources.json` provenance output.
 - Added local CC0 ambientCG asphalt, concrete and brick image maps in
   `public/textures/`; see `data/ATTRIBUTION.md`.
+- Road ribbons now use upward-facing triangle winding (the old winding was
+  back-face culled), visible dashed center markings, and concrete sidewalk bands.
+  Spawn is on Bremner Boulevard, aimed northeast along the road.
+- Lake water now uses smaller, lower-amplitude normals and reduced reflection
+  glare; the water shader scale must be set through its `size` uniform because
+  `Water.js` samples the normal map using world coordinates.
 - Regenerated the building dataset: 291 buildings, currently 0 OSM matches.
   Category counts in the generated data are 102 glass towers, 90 office mid-rises,
   64 masonry low-rises and 35 houses. These are currently height/area fallbacks.
@@ -100,8 +108,8 @@ working tree before editing; do not reset or overwrite these changes.
   app data. Per repository instructions, use `graphify query "..."` for codebase
   questions when `graphify-out/graph.json` exists, and run `graphify update .`
   after source edits.
-- No typecheck, app build, or browser verification was run after the graphics
-  changes. Available commands are listed below.
+- `npm run typecheck` passes after the road/spawn changes. A production build and
+  browser verification have not been run. Available commands are listed below.
 
 ### Outstanding work / known blockers
 

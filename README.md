@@ -54,7 +54,8 @@ Click the canvas to capture the mouse, then explore. The processed assets
 | **Esc** | Release the mouse pointer |
 | **Click a building** | Inspect its source metadata (ID, height, data source) |
 
-You spawn in the open plaza just south-east of the CN Tower, facing the skyline.
+You spawn on the Bremner Boulevard sidewalk southeast of the CN Tower, facing
+northeast along the street into downtown.
 
 ---
 
