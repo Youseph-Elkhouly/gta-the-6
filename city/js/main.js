@@ -569,6 +569,7 @@ async function initApp() {
     if (currentCam.category !== 'follow') {
       selectCamera('chase', false);
     }
+    return true;
   }
 
   function selectCamera(camId, snap = false) {
@@ -1569,6 +1570,7 @@ async function initApp() {
         }
         setLoadingProgress(1);
         window.__CITY_APP.ready = true;
+        window.__CITY_APP.phone = window.CITY.createPhoneManager(window.__CITY_APP);
         openDeepLink();
         if (multiplayer) multiplayer.start({ tourGuide, rideSession, subwayRide, teleportTo, camera: cameraSystem.camera });
         // The phone tiers: the CPU copies of what the GPU now holds go (scene-culling.js), a second pass a little later

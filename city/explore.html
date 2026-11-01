@@ -139,6 +139,7 @@
         './js/photo-mode.js',
         './js/mp-protocol.js',
         './js/multiplayer.js',
+        './js/phone.js',
         './js/main.js'
       ];
     })();
@@ -163,6 +164,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&amp;family=Bebas+Neue&amp;family=Inter:opsz,wght@14..32,400..800&amp;family=Overpass:wght@600;700&amp;display=swap" />
   <link rel="stylesheet" href="./css/style.css" />
   <link rel="stylesheet" href="./css/gta.css" />
+  <link rel="stylesheet" href="./css/phone.css" />
   <!-- three.js dev branch pinned to commit b339627068 (2026-10-28, upstream Slop New York c36373c) via jsDelivr: mrdoob's engine needs dev (it crawls at 1 fps on the 0.186.1 release) -->
   <script type="importmap">
     {
@@ -367,8 +369,11 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <!-- Top-Right: one settings cog. Time, sights, map, sound, and the camera live inside it. -->
+  <!-- Top-right phone launcher and a gear shortcut to the in-phone Settings app. -->
   <div class="hud hud-top-right">
+    <button id="btn-phone" class="panel phone-launcher" type="button" title="Open phone [↑]" aria-label="Open phone">
+      <span aria-hidden="true">▣</span><kbd>↑</kbd>
+    </button>
     <button id="btn-settings" class="panel tool-btn icon-only settings-cog" type="button" aria-expanded="false" aria-controls="settings-panel" title="Settings" aria-label="Settings">
       <svg class="icon" aria-hidden="true"><use href="#i-cog"/></svg>
     </button>
@@ -762,7 +767,7 @@
     }
     settingsBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-      setSettingsOpen(settingsPanel.hidden);
+      window.__CITY_APP?.phone?.open('settings');
     });
     document.addEventListener('click', (event) => {
       if (settingsPanel.hidden) return;
