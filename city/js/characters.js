@@ -429,13 +429,45 @@
     if (box) box.hidden = true;
   }
 
+  // The engine rejects a stand that clips a wall or a parked vehicle, then hunts in 4 m rings
+  // and can drop the player on the NPC. Prefer another sidewalk point 3–6 m away that it will accept.
+  function usableStand(c) {
+    const cm = window.__CITY_APP && window.__CITY_APP.controllerManager;
+    if (!cm || !cm.findTeleportPosition) return c.stand;
+    const tryPoint = (x, z) => {
+      const gap = Math.hypot(x - c.npc.x, z - c.npc.z);
+      if (gap < 3.2 || gap > 6 || !safeWalk(x, z)) return null;
+      const heading = Math.atan2(c.npc.x - x, c.npc.z - z);
+      return cm.findTeleportPosition(x, z, heading, null, true) ? { x, z, heading, y: null } : null;
+    };
+    const first = tryPoint(c.stand.x, c.stand.z);
+    if (first) return first;
+    const dx = c.stand.x - c.npc.x;
+    const dz = c.stand.z - c.npc.z;
+    const len = Math.hypot(dx, dz) || 1;
+    const hx = dx / len;
+    const hz = dz / len;
+    const px = -hz;
+    const pz = hx;
+    for (const dist of [4.4, 5.1, 3.6, 4.8, 4.0]) {
+      for (const dir of [1, -1]) {
+        for (const lat of [0, 0.7, -0.7, 1.3, -1.3]) {
+          const found = tryPoint(c.npc.x + hx * dir * dist + px * lat, c.npc.z + hz * dir * dist + pz * lat);
+          if (found) return found;
+        }
+      }
+    }
+    return c.stand;
+  }
+
   function teleportToCharacter(id) {
     const c = CHARACTERS.find((p) => p.id === id);
     const app = window.__CITY_APP;
     if (!c || !app) return false;
     close();
     if (app.controllerManager.activeMode !== 'person') app.selectMode('person');
-    app.teleportTo(c.stand.x, c.stand.z, c.stand.heading, c.stand.y);
+    const stand = usableStand(c);
+    app.teleportTo(stand.x, stand.z, stand.heading, stand.y);
     return true;
   }
 
