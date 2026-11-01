@@ -45,7 +45,10 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     await page.locator('.phone-overlay.is-open').waitFor();
     if (process.env.PHONE_PREVIEW_PATH) { await page.waitForTimeout(450); await page.screenshot({ path: process.env.PHONE_PREVIEW_PATH }); }
     assert.equal(await page.evaluate(() => CITY.uiOverlay), 'phone');
+    assert.equal(await page.evaluate(() => phone.screen), 'home', 'the phone opens to its home screen');
+    assert.deepEqual(await page.locator('.phone-app-icon .phone-app-name').allInnerTexts(), ['Garage', 'Teleport']);
     await page.locator('.phone-app-icon[data-app="garage"]').click();
+    assert.equal(await page.evaluate(() => phone.screen), 'garage', 'Garage opens the vehicle picker');
     await page.locator('.garage-option').filter({ hasText: 'Car' }).click();
     assert.equal(await page.evaluate(() => game.controllerManager.activeMode), 'car');
     assert.equal(await page.evaluate(() => CITY.uiOverlay), null, 'successful mode switch closes the phone');
@@ -79,7 +82,7 @@ test('phone opens, switches the existing mode, searches a place, teleports, and 
     assert.equal(await page.evaluate(() => window.mapActivated), true, 'settings actions that open other overlays release the phone first');
     assert.equal(await page.evaluate(() => phone.isOpen()), false);
     await page.keyboard.press('ArrowUp');
-    await page.locator('.phone-app-icon[data-app="settings"]').click();
+    await page.locator('#btn-settings').click();
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), false);
     await page.locator('.phone-nav-home').click();
     assert.equal(await page.evaluate(() => settingsPanelRef.hidden), true, 'settings panel hides when leaving its app');

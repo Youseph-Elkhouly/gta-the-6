@@ -8,9 +8,8 @@
   ];
   const QUICK_DESTINATIONS = ['CN Tower', 'Rogers Centre', 'Union Station', 'Nathan Phillips Square', 'Dundas Square'];
   const APPS = [
-    { id: 'garage', name: 'Garage', tagline: 'Pick your ride', icon: '<svg viewBox="0 0 32 32"><path d="m4 18 2.5-7a3 3 0 0 1 2.8-2h13.4a3 3 0 0 1 2.8 2L28 18v7H4z"/><path d="M4 18h24M8 25v2m16-2v2M8 15h16"/><circle cx="9" cy="22" r="1.4"/><circle cx="23" cy="22" r="1.4"/></svg>', color: 'garage' },
-    { id: 'teleport', name: 'Teleport', tagline: 'Skip the traffic', icon: '<svg viewBox="0 0 32 32"><path d="M16 28s10-9.1 10-16a10 10 0 1 0-20 0c0 6.9 10 16 10 16Z"/><circle cx="16" cy="12" r="3.4"/><path d="M18.5 23.5 27 25l-1.5-8.5"/></svg>', color: 'teleport' },
-    { id: 'settings', name: 'Settings', tagline: 'Tune your world', icon: '⚙', color: 'settings' }
+    { id: 'garage', name: 'Garage', color: 'garage', icon: '<svg viewBox="0 0 64 64"><path d="m8 37 4-13a5 5 0 0 1 5-4h30a5 5 0 0 1 5 4l4 13v14h-6v-5H14v5H8z"/><path d="M10 37h44M18 29h28"/><circle cx="18" cy="39" r="3"/><circle cx="46" cy="39" r="3"/></svg>' },
+    { id: 'teleport', name: 'Teleport', color: 'teleport', icon: '<svg viewBox="0 0 64 64"><circle cx="28" cy="29" r="21"/><path d="M7 29h42M28 8c8 7 12 14 12 21s-4 14-12 21M28 8c-8 7-12 14-12 21s4 14 12 21M45 46l13 13m-12-18v11h11"/></svg>' }
   ];
 
   function createPhoneManager(game) {
@@ -25,22 +24,24 @@
     root.setAttribute('aria-hidden', 'true');
     root.innerHTML = `
       <div class="phone-device">
-        <div class="phone-top-bezel"><span class="phone-brand-mark" aria-hidden="true">S</span><span class="phone-device-brand">Slopberry</span><i aria-hidden="true"></i></div>
+        <div class="phone-top-bezel"><svg class="phone-brand-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.2 4.4C7.5 1.8 9.3.8 11.8 1c-.6 2-1.8 3.2-3.6 3.4ZM8 5.2C5.4 3.5 1.9 5.4 2 9.2c.1 3.4 2.2 6.8 4.6 6.8.7 0 1-.5 1.7-.5s1 .5 1.8.5c2.3 0 4.4-3.4 4.5-6.8.1-3.8-3.8-5.7-6.6-4Z"/></svg><span class="phone-device-brand">iFruit</span><i aria-hidden="true"></i></div>
         <div class="phone-screen">
-          <div class="phone-status"><span class="phone-signal" aria-label="Signal"><i></i><i></i><i></i><i></i></span><span class="phone-carrier">SLOP</span><span class="phone-clock">--:--</span><span class="phone-battery" aria-label="Battery full"><i></i><b></b></span></div>
-          <div class="phone-service-band"><span>SixOS</span><small>TORONTO</small></div>
+          <div class="phone-status"><span class="phone-signal" aria-label="Signal"><i></i><i></i><i></i><i></i></span><span class="phone-carrier-mark" aria-label="Carrier" aria-hidden="true">◕</span><span class="phone-day">Wed</span><span class="phone-clock">--:--</span><span class="phone-battery" aria-label="Battery full"><i></i><b></b></span></div>
+          <div class="phone-service-band"><span>Home</span></div>
           <div class="phone-content"></div>
-          <nav class="phone-home-bar" aria-label="Phone shortcuts">
-            <button class="phone-nav-home" type="button" aria-label="Home">⌂</button>
-            <button class="phone-nav-garage" type="button" aria-label="Garage">▰</button>
-            <button class="phone-nav-teleport" type="button" aria-label="Teleport">⌖</button>
-            <button class="phone-nav-back" type="button" aria-label="Back">↶</button>
-          </nav>
+          <button class="phone-add" type="button" aria-label="Open Garage to spawn or switch vehicles" title="Garage · spawn or switch vehicles">+</button>
         </div>
+        <nav class="phone-home-bar" aria-label="Phone shortcuts">
+          <button class="phone-nav-search" type="button" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.2"/><path d="m15 15 5 5"/></svg><span class="phone-nav-label">Search</span></button>
+          <button class="phone-nav-home" type="button" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1-3 1-5 4-5-1 3-2 4-4 5Zm0 2c-2-2-7-1-7 4 0 5 3 9 6 9 1 0 1-1 2-1s1 1 2 1c3 0 6-4 6-9 0-5-5-6-9-4Z"/></svg><span class="phone-nav-label">Home</span></button>
+          <button class="phone-nav-back" type="button" aria-label="Back" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span class="phone-nav-label">Back</span></button>
+        </nav>
       </div>`;
     document.body.appendChild(root);
     const content = root.querySelector('.phone-content');
     const clock = root.querySelector('.phone-clock');
+    const day = root.querySelector('.phone-day');
+    const serviceTitle = root.querySelector('.phone-service-band span');
     let lease = null;
     let screen = 'home';
     let selectedPlace = null;
@@ -48,30 +49,39 @@
     let closingTimer = 0;
 
     function setClock() {
-      clock.textContent = new Intl.DateTimeFormat(undefined, { timeZone: 'America/Toronto', weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date());
+      let now = new Date();
+      let gameClock = '';
+      try {
+        const state = game.liveSky?.state?.();
+        if (state?.fixedClock) now = new Date(state.fixedClock);
+        gameClock = state?.clock || '';
+      } catch (_) {}
+      day.textContent = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', weekday: 'short' }).format(now);
+      clock.textContent = gameClock || new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hour: 'numeric', minute: '2-digit' }).format(now);
     }
     setClock();
     const clockTimer = window.setInterval(setClock, 30_000);
 
     function isOpen() { return !!lease; }
     function renderHome() {
-      screen = 'home'; selectedPlace = null;
+      screen = 'home'; selectedPlace = null; serviceTitle.textContent = 'Home';
       document.getElementById('btn-settings')?.setAttribute('aria-expanded', 'false');
       if (settingsPanel) settingsPanel.hidden = true;
-      content.innerHTML = '<div class="phone-home-wallpaper"><div class="phone-greeting"><span class="phone-kicker">SLOP SIX WIRELESS</span><h2>Quick Save</h2><p>Toronto will still be here.</p></div><div class="phone-facets" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div class="phone-app-grid" aria-label="Phone apps"></div>';
+      content.innerHTML = '<div class="phone-app-grid" aria-label="Phone apps"></div>';
       const grid = content.querySelector('.phone-app-grid');
-      APPS.forEach((item) => {
+      APPS.forEach((app) => {
         const button = document.createElement('button');
-        button.type = 'button'; button.className = 'phone-app-icon'; button.dataset.app = item.id;
-        button.innerHTML = `<span class="phone-app-glyph ${item.color}" aria-hidden="true">${item.icon}</span><span class="phone-app-name"></span><span class="phone-app-tagline"></span>`;
-        button.querySelector('.phone-app-name').textContent = item.name;
-        button.querySelector('.phone-app-tagline').textContent = item.tagline;
-        button.addEventListener('click', () => ({ garage: renderGarage, teleport: renderTeleport, settings: renderSettings })[item.id]());
+        button.type = 'button'; button.className = 'phone-app-icon'; button.dataset.app = app.id;
+        button.setAttribute('aria-label', `Open ${app.name}`);
+        button.innerHTML = `<span class="phone-app-glyph ${app.color}" aria-hidden="true">${app.icon}</span><span class="phone-app-name"></span>`;
+        button.querySelector('.phone-app-name').textContent = app.name;
+        button.addEventListener('click', () => app.id === 'garage' ? renderGarage() : renderTeleport());
         grid.appendChild(button);
       });
     }
 
     function appHeader(title, subtitle) {
+      serviceTitle.textContent = title;
       if (settingsPanel) settingsPanel.hidden = true;
       document.getElementById('btn-settings')?.setAttribute('aria-expanded', 'false');
       content.replaceChildren();
@@ -100,7 +110,11 @@
     }
 
     function renderGarage() {
-      screen = 'garage'; appHeader('Garage', 'Choose what gets you there.');
+      screen = 'garage'; serviceTitle.textContent = 'Garage';
+      document.getElementById('btn-settings')?.setAttribute('aria-expanded', 'false');
+      if (settingsPanel) settingsPanel.hidden = true;
+      content.replaceChildren();
+      const intro = document.createElement('p'); intro.className = 'garage-intro'; intro.textContent = 'Choose what gets you there.'; content.appendChild(intro);
       const list = document.createElement('div'); list.className = 'garage-list';
       const active = game.controllerManager.activeMode;
       const current = VEHICLES.find((v) => v.id === active);
@@ -128,7 +142,7 @@
     }
 
     function renderTeleport() {
-      screen = 'teleport'; selectedPlace = null; appHeader('Teleport', 'Pick a place in the city map.');
+      screen = 'teleport'; selectedPlace = null; appHeader('Teleport', 'Search places in the city map.');
       const wrap = document.createElement('div'); wrap.className = 'teleport-app';
       const label = document.createElement('label'); label.className = 'phone-search-label'; label.textContent = 'DESTINATION'; label.htmlFor = 'phone-place-search';
       const search = document.createElement('input'); search.id = 'phone-place-search'; search.className = 'phone-search'; search.type = 'search'; search.placeholder = 'Search Toronto'; search.autocomplete = 'off'; search.spellcheck = false;
@@ -242,9 +256,9 @@
     }
 
     root.addEventListener('click', (event) => { if (event.target === root) close(); });
-    root.querySelector('.phone-nav-home').addEventListener('click', () => screen === 'home' ? close() : renderHome());
-    root.querySelector('.phone-nav-garage').addEventListener('click', renderGarage);
-    root.querySelector('.phone-nav-teleport').addEventListener('click', renderTeleport);
+    root.querySelector('.phone-nav-home').addEventListener('click', renderHome);
+    root.querySelector('.phone-nav-search').addEventListener('click', renderTeleport);
+    root.querySelector('.phone-add').addEventListener('click', renderGarage);
     root.querySelector('.phone-nav-back').addEventListener('click', () => screen === 'home' ? close() : renderHome());
     launcher.addEventListener('click', () => open());
     window.addEventListener('keydown', (event) => {

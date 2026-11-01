@@ -372,7 +372,7 @@
   <!-- Top-right phone launcher and a gear shortcut to the in-phone Settings app. -->
   <div class="hud hud-top-right">
     <button id="btn-phone" class="panel phone-launcher" type="button" title="Open phone [↑]" aria-label="Open phone">
-      <span aria-hidden="true">▣</span><kbd>↑</kbd>
+      <img class="phone-launcher-glyph" src="./assets/phone-launcher.png" alt="" aria-hidden="true" /><kbd>↑</kbd>
     </button>
     <button id="btn-settings" class="panel tool-btn icon-only settings-cog" type="button" aria-expanded="false" aria-controls="settings-panel" title="Settings" aria-label="Settings">
       <svg class="icon" aria-hidden="true"><use href="#i-cog"/></svg>
@@ -380,7 +380,7 @@
     <div id="settings-panel" class="panel settings-panel" hidden>
     <div id="hud-toolbar" class="toolbar">
       <div class="time-switch" role="group" aria-label="Atmosphere &amp; time of day">
-        <button id="time-live" class="time-btn live-btn" data-live type="button" aria-pressed="false" title="Live: Toronto's time of day and weather right now">
+        <button id="time-live" class="time-btn live-btn" data-live type="button" aria-pressed="false" aria-label="Live: Toronto's time of day and weather right now">
           <svg class="icon" aria-hidden="true"><use href="#i-live"/></svg><span class="seg-label">Live</span>
         </button>
         <button id="time-golden" class="time-btn active" data-time="golden" type="button" title="Golden Hour">
@@ -414,7 +414,6 @@
       <button id="btn-sound" class="tool-btn icon-only" type="button" title="Mute the sound [N]" aria-label="Mute sound" aria-pressed="true">
         <svg class="icon" aria-hidden="true"><use href="#i-sound"/></svg>
       </button>
-      <button id="btn-gta-look" class="tool-btn" type="button" aria-pressed="true" title="GTA colour grade [G]">GTA look</button>
       <button id="btn-toggle-hud" class="tool-btn icon-only" type="button" title="Clean view: hide the HUD [H]" aria-label="Hide HUD" aria-pressed="false">
         <svg class="icon icon-hide" aria-hidden="true"><use href="#i-eye"/></svg><svg class="icon icon-show" aria-hidden="true"><use href="#i-eye-off"/></svg>
       </button>
@@ -778,9 +777,6 @@
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') setSettingsOpen(false);
       const typing = event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA');
-      if (event.code === 'KeyG' && !typing && !event.repeat && !event.metaKey && !event.ctrlKey && !event.altKey) {
-        window.CITY.GTAVisualPreset?.toggle();
-      }
       if (event.key === 'Enter' && !typing) {
         const overlay = document.getElementById('loading-overlay');
         const enter = document.getElementById('enter-the-6');
@@ -798,8 +794,6 @@
       const fallback = document.getElementById('gta-logo-fallback');
       if (fallback) fallback.hidden = false;
     });
-    const lookBtn = document.getElementById('btn-gta-look');
-    if (lookBtn) lookBtn.addEventListener('click', () => window.CITY.GTAVisualPreset?.toggle());
   </script>
 </body>
 </html>

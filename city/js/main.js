@@ -745,9 +745,9 @@ async function initApp() {
     liveBtn.setAttribute('aria-pressed', String(active));
     const { clock, sky } = liveSummary();
     if (liveLabel) liveLabel.textContent = active ? `Live · ${clock}` : 'Live';
-    liveBtn.title = active
+    liveBtn.setAttribute('aria-label', active
       ? `Live: Toronto at ${clock}${sky ? `, ${sky} at Pearson (Environment and Climate Change Canada)` : ''}`
-      : 'Back to live: Toronto\'s time of day and weather right now';
+      : 'Back to live: Toronto\'s time of day and weather right now');
   }
   const elToast = document.getElementById('toast');
   let toastTimer = 0;
