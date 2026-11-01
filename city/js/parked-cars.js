@@ -164,7 +164,7 @@ function buildParkedCars(scene, network, { patioColliders = [] } = {}) {
   const stats = { enabled: !off && !!DATA, tier: Q.tier, source: DATA?.counts || null, cap: Q.parkedCars, kept: 0, laneDropped: 0, laneDroppedBy: {}, laneDrops: [],
     patioDropped: 0, colliders: 0, near: 0, far: 0, ms: 0 };
   window.CITY.parkedStats = stats;
-  const empty = { group: null, colliders: [], update() {}, parkedAt: () => false, stats };
+  const empty = { group: null, colliders: [], update() {}, parkedAt: () => false, nearestDrivable: () => null, claim: () => null, stats };
   if (off || !DATA) return empty;
   const F = Object.fromEntries(FIELDS.map((k, i) => [k, i]));
   const DV = window.CITY.DON_VALLEY; // (the pilot: js/don-valley.js)
@@ -254,7 +254,9 @@ function buildParkedCars(scene, network, { patioColliders = [] } = {}) {
         const cell = cells.get(i * 100003 + j);
         if (!cell) continue;
         for (const id of cell.ids) {
-          const c = cars[id], dx = x - c.cx, dz = z - c.cz;
+          const c = cars[id];
+          if (c.taken) continue;
+          const dx = x - c.cx, dz = z - c.cz;
           if (Math.abs(dx * c.tx + dz * c.tz) <= c.hl + pad && Math.abs(dx * c.tz - dz * c.tx) <= c.hw + pad) return true;
         }
       }
@@ -352,6 +354,7 @@ function buildParkedCars(scene, network, { patioColliders = [] } = {}) {
         if (!frustum.intersectsSphere(sphere)) continue;
         for (const id of cell.ids) {
           const c = cars[id];
+          if (c.taken) continue;
           const d = Math.hypot(c.cx - p.x, c.cz - p.z, p.y);
           if (d > farD) continue;
           sphere.center.set(c.cx, 1, c.cz);
@@ -396,7 +399,58 @@ function buildParkedCars(scene, network, { patioColliders = [] } = {}) {
   window.CITY.parkedCarsList = () => cars.map((c) => ({ kind: c.kind, x: c.cx, z: c.cz, yaw: c.yaw, hl: c.hl, hw: c.hw, cat: c.cat }));
   console.info(`[parked] ${cars.length} parked cars (${Q.tier}: cap ${Q.parkedCars}; ${stats.laneDropped} off the built lanes' way, ` +
     `${stats.patioDropped} on a patio left out) in ${stats.ms} ms (decoded in ${stats.decodeMs} ms)`);
-  return { group, colliders, update, parkedAt, stats, cars };
+  function nearestDrivable(x, z, radius = 5.5) {
+    let best = null;
+    for (let i = Math.floor((x - radius) / CELL); i <= Math.floor((x + radius) / CELL); i++) {
+      for (let j = Math.floor((z - radius) / CELL); j <= Math.floor((z + radius) / CELL); j++) {
+        const cell = cells.get(i * 100003 + j);
+        if (!cell) continue;
+        for (const id of cell.ids) {
+          const c = cars[id];
+          if (c.taken) continue;
+          const dx = x - c.cx, dz = z - c.cz;
+          const along = Math.abs(dx * c.tx + dz * c.tz);
+          const across = Math.abs(dx * c.tz - dz * c.tx);
+          const gap = Math.hypot(Math.max(0, along - c.hl), Math.max(0, across - c.hw));
+          if (gap > 1.8 || (best && gap >= best.distance)) continue;
+          best = {
+            id: `parked-car-${id}`,
+            distance: gap,
+            x: c.cx,
+            z: c.cz,
+            y: 0,
+            heading: c.yaw,
+            speed: 0,
+            bodyType: c.kind,
+            paint: c.paint.slice()
+          };
+        }
+      }
+    }
+    return best;
+  }
+
+  function claim(id) {
+    const match = /^parked-car-(\d+)$/.exec(String(id));
+    if (!match) return null;
+    const c = cars[Number(match[1])];
+    if (!c || c.taken) return null;
+    c.taken = true;
+    if (c.collider) c.collider.maxY = -8;
+    last.x = Infinity;
+    return {
+      id,
+      x: c.cx,
+      z: c.cz,
+      y: 0,
+      heading: c.yaw,
+      speed: 0,
+      bodyType: c.kind,
+      paint: c.paint.slice()
+    };
+  }
+
+  return { group, colliders, update, parkedAt, nearestDrivable, claim, stats, cars };
 }
 
 Object.assign(window.CITY, { buildParkedCars });

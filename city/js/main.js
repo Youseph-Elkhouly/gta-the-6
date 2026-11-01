@@ -967,10 +967,13 @@ async function initApp() {
       return;
     }
     const p = cm.getActiveEntity().position;
+    const reach = (v) => v.type === 'helicopter' ? 8.5 : 5.5;
     const candidates = [...cm.worldVehicles.values()]
-      .filter((v) => !v.occupied && Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) <= 3.8)
+      .filter((v) => !v.occupied && Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) <= reach(v))
       .map((v) => ({ kind: 'enter', record: v, distance: Math.hypot(v.entity.position.x - p.x, v.entity.position.z - p.z) }));
-    const trafficCar = trafficSystem.nearestDrivableCar?.(p.x, p.z, 3.8);
+    const parkedCar = parkedCars?.nearestDrivable?.(p.x, p.z, 5.5);
+    if (parkedCar) candidates.push({ kind: 'parked', candidate: parkedCar, distance: parkedCar.distance });
+    const trafficCar = trafficSystem.nearestDrivableCar?.(p.x, p.z, 5.5);
     if (trafficCar) candidates.push({ kind: 'traffic', candidate: trafficCar, distance: trafficCar.distance });
     candidates.sort((a, b) => a.distance - b.distance);
     nearbyVehicleAction = candidates[0] || null;
@@ -1006,6 +1009,7 @@ async function initApp() {
     if (controllerManager.activeMode === 'person' && nearbyVehicleAction) {
       let record = nearbyVehicleAction.record;
       if (nearbyVehicleAction.kind === 'traffic') record = controllerManager.adoptTrafficCar(trafficSystem, nearbyVehicleAction.candidate);
+      if (nearbyVehicleAction.kind === 'parked') record = controllerManager.adoptParkedCar(parkedCars, nearbyVehicleAction.candidate);
       if (record && controllerManager.enterVehicle(record)) { refreshVehicleMode(); return true; }
     }
     return false;
@@ -1154,6 +1158,7 @@ async function initApp() {
           document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.isContentEditable) break;
         // While driving, E belongs to vehicle exit and should not be consumed by a nearby NPC interaction.
         if (controllerManager.activeMode !== 'person' && controllerManager.activeVehicle && interactWithWorldVehicle()) break;
+        if (nearbyVehicleAction && interactWithWorldVehicle()) break;
         if (window.CITY.cameos && window.CITY.cameos.tryTalk()) break;
         if (interactWithWorldVehicle()) break;
         subwayRide.action() || streetcarRide.action();

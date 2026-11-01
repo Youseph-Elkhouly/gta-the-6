@@ -531,23 +531,31 @@ class ThirdPersonControllerManager {
     return { ok: true };
   }
 
-  adoptTrafficCar(trafficSystem, candidate) {
-    if (this.activeMode !== 'person' || this.suspended || !candidate) return null;
-    const claimed = trafficSystem?.claimDrivableCar?.(candidate.id);
-    if (!claimed) return null;
+  adoptClaimedCar(claimed, source = 'traffic') {
+    if (this.activeMode !== 'person' || this.suspended || !claimed) return null;
     const entity = this.createCarEntity({ bodyType: claimed.bodyType, paint: claimed.paint });
-    entity.position.set(claimed.x, claimed.y, claimed.z);
+    entity.position.set(claimed.x, claimed.y || 0, claimed.z);
     entity.heading = claimed.heading;
-    entity.speed = claimed.speed;
+    entity.speed = claimed.speed || 0;
     entity.mesh.position.copy(entity.position);
     entity.mesh.rotation.y = entity.heading;
     entity.mesh.traverse((child) => { if (child.isMesh) child.castShadow = child.receiveShadow = true; });
     const id = `jacked-${claimed.id}`;
-    entity.source = 'traffic'; entity.vehicleId = id;
+    entity.source = source; entity.vehicleId = id;
     entity.takeHit = (speed) => this.damageCar(speed);
-    const record = { id, type: 'car', source: 'traffic', entity, occupied: false, owner: null };
+    const record = { id, type: 'car', source, entity, occupied: false, owner: null };
     this.worldVehicles.set(id, record);
     return record;
+  }
+
+  adoptTrafficCar(trafficSystem, candidate) {
+    if (!candidate) return null;
+    return this.adoptClaimedCar(trafficSystem?.claimDrivableCar?.(candidate.id), 'traffic');
+  }
+
+  adoptParkedCar(parkedCars, candidate) {
+    if (!candidate) return null;
+    return this.adoptClaimedCar(parkedCars?.claim?.(candidate.id), 'parked');
   }
 
   // savedAltitude also selects the current deck for ground arrivals; flight defaults to a safe 92 m or more.

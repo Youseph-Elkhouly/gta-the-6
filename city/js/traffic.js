@@ -3886,13 +3886,14 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
     // Ambient instanced cars cannot be handed to the player renderer directly. This adapter retires one
     // deterministic traffic actor and returns its transform/paint so the existing player car controller can
     // take ownership at the same position without leaving the traffic car behind.
-    nearestDrivableCar(x, z, radius = 3.5) {
+    nearestDrivableCar(x, z, radius = 5.5) {
       let best = null;
       for (let i = 0; i < cars.length; i++) {
         const v = cars[i];
-        if (!v.edge || v.isPolice || v.bus || Math.abs(v.speed || 0) > 1.5) continue;
-        const d = Math.hypot(v.x - x, v.z - z);
-        if (d > radius || (best && d >= best.distance)) continue;
+        if (!v.edge || v.isPolice || v.bus || v.pursuit || Math.abs(v.speed || 0) > 12) continue;
+        const half = v.halfL || v.half || 2.2;
+        const d = Math.max(0, Math.hypot(v.x - x, v.z - z) - half);
+        if (d > 2.2 || (best && d >= best.distance)) continue;
         best = { id: `traffic-car-${i}`, distance: d, x: v.x, z: v.z, y: v.y || 0,
           heading: v.yaw + (v.yawOffset || 0), speed: v.speed || 0, bodyType: v.bodyType,
           paint: v.paint?.slice() || [0.7, 0.7, 0.7], style: v.style };
@@ -3903,7 +3904,7 @@ function createTrafficSystem(scene, sidewalks, obstacles, pedestrian = {}) {
       const match = /^traffic-car-(\d+)$/.exec(String(id));
       if (!match) return null;
       const v = cars[Number(match[1])];
-      if (!v || !v.edge || v.isPolice || v.bus || Math.abs(v.speed || 0) > 1.5) return null;
+      if (!v || !v.edge || v.isPolice || v.bus || v.pursuit || Math.abs(v.speed || 0) > 12) return null;
       const taken = { id, x: v.x, z: v.z, y: v.y || 0, heading: v.yaw + (v.yawOffset || 0),
         speed: v.speed || 0, bodyType: v.bodyType, paint: v.paint?.slice() || [0.7, 0.7, 0.7], style: v.style };
       retire(v);
