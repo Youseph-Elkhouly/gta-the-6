@@ -9,6 +9,18 @@ real Toronto streets, landmarks, transit, and waterfront locations.
 
 Recent Chrome or Edge is recommended for WebGPU. Supported browsers can fall back to WebGL2, without volumetric clouds.
 
+## Screenshots and gameplay clips
+
+Scenes from the city, including the Bloor Viaduct, downtown streets, parks, and the subway corridor:
+
+![GTA: THE 6 city scenes at night and golden hour](city/docs/images/grid.jpg)
+
+Click a preview to open its gameplay clip:
+
+| TTC subway on the Bloor Viaduct | 504 streetcar | Toronto waterfront |
+| --- | --- | --- |
+| [![Subway crossing the Bloor Viaduct](city/assets/site/clips/subway-viaduct.webp)](city/assets/site/clips/subway-viaduct.mp4) | [![TTC 504 streetcar downtown](city/assets/site/clips/streetcar-504.webp)](city/assets/site/clips/streetcar-504.mp4) | [![Ride along the Toronto waterfront](city/assets/site/clips/waterfront-ride.webp)](city/assets/site/clips/waterfront-ride.mp4) |
+
 ## Gameplay
 
 - Explore on foot and use the in-game map and minimap to navigate.
@@ -18,6 +30,16 @@ Recent Chrome or Edge is recommended for WebGPU. Supported browsers can fall bac
 - Ride TTC streetcars and subway trains, visit Toronto landmarks, and adjust time, weather, and settings in the phone.
 
 Controls change by mode. The on-screen hints show the current keyboard, touch, and gamepad controls.
+
+## Toronto in detail
+
+- **Transit:** ride subway routes including Line 2 across the Bloor Viaduct, use 27 street-level stations, and board
+  TTC streetcars and GO trains on mapped routes.
+- **Street network:** explore Toronto bike lanes, cycle tracks, waterfront trails, intersections, and street furniture.
+  Traffic and roughly 10,800 curb-parked cars are placed to reflect the city's parking rules.
+- **Local places:** visit the CN Tower, Rogers Centre, parks, public art, and heritage sites in their mapped locations.
+- **Changing city:** adjust the time and weather, from bright afternoon to golden hour, rain, snow, and night; traffic,
+  streetcars, and the waterfront contribute to the city soundscape.
 
 ## Technical overview
 
