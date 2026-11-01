@@ -1,0 +1,1586 @@
+/* css/landing.css: the Slop Toronto home page (index.html), set as this week's free Toronto city paper.
+   Direction contract: .impeccable/surfaces/index-html.md (The City Weekly). Newsprint, black ink, one spot red,
+   one process-yellow sticker per view, Archivo across its width axis. No rounded corners, no shadows, no glass. */
+/* Archivo, self-hosted: the variable Latin subset, both axes (width 62–125 %, weight 400–900). SIL OFL 1.1. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  src: url('../assets/fonts/archivo-latin-var.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --paper: #e9e6dc;
+  --ink: #151412;
+  --ink-2: #3d3a34;
+  --red: #d8261c;
+  /* the same spot red, deepened for small type: #d8261c on newsprint is 4.0:1, fine only at large sizes */
+  --red-ink: #b3170f;
+  --yellow: #ffd23f;
+  --rule: 2px solid var(--ink);
+  --rule-thick: 6px solid var(--ink);
+  --gutter: clamp(16px, 2.2vw, 32px);
+  --max: 1600px;
+  /* the gap between the back page and the colophon's heavy rule (the back-page logo reaches down across it) */
+  --back-gap: 64px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --cond: 62%;
+  --semi: 75%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-color: var(--ink) var(--paper);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.5;
+  font-weight: 450;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.18em;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+input {
+  caret-color: var(--red);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.num,
+.km {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.i {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 50;
+  padding: 8px 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.skip:focus {
+  top: 8px;
+}
+
+/* ---------------------------------------------------------------- Masthead */
+.mast {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 24px;
+  --mast-pb: 12px;
+  padding: 18px var(--gutter) var(--mast-pb);
+  border-bottom: var(--rule-thick);
+}
+
+.mast-issue {
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mast-right {
+  text-align: right;
+}
+
+.mast .ln {
+  display: block;
+}
+
+.mast .nb {
+  white-space: nowrap;
+}
+
+/* the weather ear mirrors the issue line's two lines; it keeps their space while it loads and stays blank if the
+   reading never comes, so the name never moves */
+.mast-weather {
+  min-height: 2.7em;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  visibility: hidden;
+}
+
+.mast-weather.is-live {
+  visibility: visible;
+}
+
+.mast-weather b {
+  font-weight: 900;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.mast-name {
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(64px, 8.2vw, 118px);
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mast-box {
+  display: inline-block;
+  padding: 0.04em 0.12em 0;
+  background: var(--red);
+  color: var(--paper);
+}
+
+/* the crest: John's brand logo (assets/brand/, never recoloured), set beside the name the way a paper sets its emblem.
+   The art's CN Tower shaft is cut flat at the bottom, so the crest never floats: it drops through the masthead's bottom
+   padding and the cut end stands exactly on the heavy rule, the tower rising out of it. An empty box of the same width
+   balances it on the right, so the name itself stays centred over the page. Its green is the logo's own, not a page ink. */
+.mast-name {
+  --crest-h: calc(0.8em + var(--mast-pb) + 0.16em);
+  display: flex;
+  align-items: flex-end;
+  gap: 0.14em;
+}
+
+.mast-crest,
+.mast-name::after {
+  flex: none;
+  width: calc(var(--crest-h) * 459 / 1568);
+}
+
+.mast-crest {
+  margin-bottom: calc(-1 * var(--mast-pb));
+}
+
+.mast-crest img {
+  width: 100%;
+  height: var(--crest-h);
+}
+
+.mast-name::after {
+  content: '';
+}
+
+/* ---------------------------------------------------------------- Section strip */
+.strip {
+  display: flex;
+  align-items: stretch;
+  border-bottom: var(--rule);
+}
+
+.strip ul {
+  display: flex;
+  flex: 1;
+  gap: clamp(16px, 2vw, 28px);
+  min-width: 0;
+  padding: 0 var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.strip ul::-webkit-scrollbar {
+  display: none;
+}
+
+.strip li a {
+  display: block;
+  padding: 9px 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.strip li a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 3px;
+}
+
+.strip b {
+  color: var(--red-ink);
+}
+
+.strip-go {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--gutter);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s var(--ease);
+}
+
+.strip-go:hover {
+  background: var(--red-ink);
+}
+
+.strip-go .i {
+  transition: transform 0.25s var(--ease);
+}
+
+.strip-go:hover .i {
+  transform: translateX(3px);
+}
+
+/* ---------------------------------------------------------------- Front page: cover + rail */
+/* both columns fill the rest of the first viewport and end together on the heavy rule; if the rail ever needs more,
+   the cover stretches with it */
+.front {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 410px);
+  min-height: max(560px, calc(100svh - var(--head, 182px)));
+  border-bottom: var(--rule-thick);
+}
+
+.cover {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 560px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.cover-media {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.frame .still,
+.frame video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(1.08) saturate(1.1);
+}
+
+.frame video {
+  opacity: 0;
+  transition: opacity 0.6s var(--ease);
+}
+
+.frame.is-playing video {
+  opacity: 1;
+}
+
+/* The app's stills and the listing clips put their subject near the middle (the CN Tower's pod about 47-50 % across,
+   30 % down); anchoring their crop to the left edge moves it right, clear of the coverline. The cover clips and their
+   posters are framed for the cover already (the tower about 68 % across) and stay centred. */
+@media (min-width: 861px) {
+  .frame-rest .still:not([src*='clips/']),
+  .frame-peek .still,
+  .frame-peek video {
+    object-position: 0% 50%;
+  }
+}
+
+.frame-peek {
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+
+.cover.is-peeking .frame-peek {
+  opacity: 1;
+}
+
+/* a scrim under the coverline */
+.cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  /* under the coverline and from the left, where the type sits, so bright sky or sun glare in a clip can't wash it out */
+  background:
+    linear-gradient(0deg, rgba(21, 20, 18, 0.9) 0%, rgba(21, 20, 18, 0.6) 34%, rgba(21, 20, 18, 0.36) 60%, rgba(21, 20, 18, 0) 84%),
+    linear-gradient(90deg, rgba(21, 20, 18, 0.38) 0%, rgba(21, 20, 18, 0.2) 40%, rgba(21, 20, 18, 0) 62%);
+  pointer-events: none;
+}
+
+.sticker {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  padding: 6px 10px 5px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+}
+
+.cover-pause {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: 2px solid var(--paper);
+  background: rgba(21, 20, 18, 0.72);
+  color: var(--paper);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.cover-pause:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.cover-pause[aria-pressed='true'] .i {
+  fill: currentColor;
+  stroke-width: 0;
+}
+
+.cover :focus-visible {
+  outline-color: var(--paper);
+}
+
+.coverstory {
+  padding: 0 28px 24px;
+}
+
+.coverstory h1 {
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(68px, min(10vw, 17svh), 144px);
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.cover-dek {
+  max-width: 44ch;
+  margin: 16px 0 18px;
+  font-size: clamp(19px, 1.6vw, 23px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.where {
+  display: flex;
+  max-width: 740px;
+  border: 4px solid var(--paper);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.where:focus-within {
+  outline: 3px solid var(--paper);
+  outline-offset: 3px;
+}
+
+.where label {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px 6px;
+  background: var(--red);
+  color: var(--paper);
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.where input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 21px;
+  font-weight: 550;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.where input::placeholder {
+  color: #5a564d;
+  opacity: 1;
+}
+
+.where input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.where input:focus {
+  outline: none;
+}
+
+.where button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font: inherit;
+  font-weight: 900;
+  font-size: 22px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s var(--ease);
+}
+
+.where button:hover {
+  background: var(--red);
+}
+
+.where button:active .i {
+  transform: translateX(3px);
+}
+
+.where button:focus-visible {
+  outline: 3px solid var(--red);
+  outline-offset: -7px;
+}
+
+.cover-caption {
+  text-wrap: balance;
+  margin-top: 14px;
+  max-width: 60ch;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(233, 230, 220, 0.86);
+}
+
+/* ---------------------------------------------------------------- The listings rail */
+.rail {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 22px 18px;
+  border-left: var(--rule);
+}
+
+.bar {
+  background: var(--ink);
+  color: var(--paper);
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: clamp(25px, 2.2vw, 32px);
+  line-height: 1.05;
+  padding: 7px 12px 5px;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.rail-key {
+  padding: 7px 0 6px;
+  border-bottom: var(--rule);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.rail-key .km {
+  font-size: 13px;
+  color: var(--red-ink);
+}
+
+/* rows share out whatever height the rail has to spare */
+.listings {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  list-style: none;
+}
+
+.listings > .listing {
+  flex: 1 0 auto;
+}
+
+.listing {
+  position: relative;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  margin: 0 -6px;
+  padding: 5px 6px;
+  border-bottom: var(--rule);
+  transition: background-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+
+.listing > img {
+  width: 76px;
+  height: 46px;
+  object-fit: cover;
+  filter: contrast(1.06) saturate(1.08);
+}
+
+.listing-link {
+  display: block;
+  font-stretch: var(--semi);
+  font-weight: 900;
+  font-size: 21px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+/* the whole row opens the place */
+.listing-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.listing-text > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.km {
+  margin-right: 4px;
+  color: var(--red);
+  font-weight: 900;
+  font-size: 19px;
+}
+
+.listing.is-active,
+.listing:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.listing:focus-within {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.listing:focus-within .listing-link:focus-visible {
+  outline: none;
+}
+
+.listing:has(.listing-link:focus-visible) {
+  outline: 3px solid var(--red);
+  outline-offset: 0;
+}
+
+.peek {
+  position: relative;
+  z-index: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  border: 2px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.peek .i {
+  fill: currentColor;
+  stroke-width: 0;
+  font-size: 16px;
+}
+
+.listing.is-open .peek .i,
+.ride-story.is-open .peek .i {
+  fill: none;
+  stroke-width: 2.6;
+}
+
+@media (hover: none) {
+  .listing .peek {
+    display: inline-flex;
+  }
+}
+
+/* a listing opened on a phone plays its clip inline */
+.listing-frame {
+  position: relative;
+  grid-column: 1 / -1;
+  order: -1;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 6px;
+  background: var(--ink);
+}
+
+.corrections {
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 3px solid var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rail .listings {
+  margin-bottom: 12px;
+}
+
+/* short desktop windows (1280 x 800): tighter rows so the Corrections box still lands in the first viewport */
+@media (min-width: 861px) and (max-height: 860px) {
+  .rail {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .rail .listings {
+    margin-bottom: 8px;
+  }
+
+  .listing {
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    column-gap: 10px;
+    padding: 3px 6px;
+  }
+
+  .listing > img {
+    width: 60px;
+    height: 36px;
+  }
+
+  .listing-link {
+    font-size: 19px;
+  }
+
+  .listing-text > span {
+    margin-top: 1px;
+    font-size: 12.5px;
+    line-height: 1.15;
+  }
+
+  .km {
+    font-size: 18.7px;
+  }
+
+  .corrections {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}
+
+.corrections b {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.corrections .webgpu-note {
+  margin-top: 6px;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- Sections below the fold */
+.section {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 64px var(--gutter) 0;
+}
+
+.section > .bar {
+  margin-bottom: 22px;
+  font-size: clamp(28px, 3.2vw, 46px);
+}
+
+.section-dek {
+  max-width: 62ch;
+  margin-bottom: 22px;
+  font-size: 19px;
+  font-weight: 550;
+}
+
+/* Ride the TTC */
+.ride-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr minmax(260px, 0.72fr);
+  gap: 0 28px;
+}
+
+.ride-story {
+  display: flex;
+  flex-direction: column;
+  padding-right: 28px;
+  border-right: var(--rule);
+}
+
+.ride-media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--ink);
+}
+
+/* the clip's poster, then its footage, sit over the type-block fallback */
+.ride-media .still,
+.ride-media video {
+  z-index: 1;
+}
+
+.ride-type {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.18em;
+  padding: 18px 20px;
+  background: var(--red);
+  color: var(--paper);
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(56px, 7vw, 112px);
+  line-height: 0.8;
+  text-transform: uppercase;
+}
+
+.ride-type span {
+  padding: 0.06em 0.1em 0;
+  background: var(--paper);
+  color: var(--red);
+}
+
+.ride-media .peek {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 2;
+  display: inline-flex;
+  width: auto;
+  height: 40px;
+  padding: 0 12px;
+  border-color: var(--paper);
+  background: rgba(21, 20, 18, 0.78);
+  color: var(--paper);
+  transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.ride-media .peek:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ride-media .peek:focus-visible {
+  outline-color: var(--yellow);
+}
+
+.ride-caption {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.ride-story h3 {
+  margin: 14px 0 8px;
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: clamp(30px, 2.7vw, 42px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.ride-story h3 a {
+  text-decoration: none;
+}
+
+.ride-story h3 a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 4px;
+}
+
+.ride-story p {
+  max-width: 52ch;
+  margin-bottom: 14px;
+}
+
+.more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 10px 14px 9px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease);
+}
+
+.more:hover {
+  background: var(--red-ink);
+}
+
+.getting-around h3 {
+  padding-bottom: 8px;
+  border-bottom: var(--rule-thick);
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.getting-around ul {
+  list-style: none;
+}
+
+.getting-around li {
+  padding: 10px 0;
+  border-bottom: var(--rule);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.getting-around li a {
+  text-decoration: none;
+}
+
+.getting-around li a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+}
+
+.getting-around b {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+/* Off the lake */
+.uptown-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr;
+  gap: 0 28px;
+  list-style: none;
+}
+
+.up + .up {
+  padding-left: 28px;
+  border-left: var(--rule);
+}
+
+.up a {
+  display: block;
+  text-decoration: none;
+}
+
+.up img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  filter: contrast(1.06) saturate(1.08);
+  margin-bottom: 12px;
+}
+
+.up b {
+  display: block;
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.up-lead b {
+  font-size: clamp(34px, 3.4vw, 50px);
+}
+
+.up span {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.up a:hover b {
+  text-decoration: underline;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 0.12em;
+}
+
+/* By the numbers */
+.readings {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.readings caption {
+  padding-bottom: 12px;
+  text-align: left;
+  font-size: 19px;
+  font-weight: 550;
+}
+
+.readings thead th {
+  padding: 6px 0;
+  border-bottom: var(--rule-thick);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.readings thead th:last-child,
+.readings td:last-child {
+  text-align: right;
+}
+
+.readings tbody tr {
+  border-bottom: var(--rule);
+}
+
+.readings td,
+.readings tbody th {
+  padding: 10px 0 8px;
+  vertical-align: baseline;
+}
+
+.readings td.num {
+  width: 1%;
+  padding-right: clamp(20px, 3vw, 48px);
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(52px, 6.4vw, 96px);
+  line-height: 0.9;
+  white-space: nowrap;
+}
+
+.readings tbody th {
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 700;
+  text-align: left;
+}
+
+.readings td:last-child {
+  padding-left: 16px;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* the live outside reading, kept apart from the build's figures */
+.outside {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 4px clamp(20px, 3vw, 48px);
+  margin-top: 18px;
+  padding: 10px 14px 8px;
+  border: 3px solid var(--ink);
+}
+
+.outside-label {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.outside-temp {
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(44px, 4.6vw, 68px);
+  line-height: 0.9;
+  white-space: nowrap;
+}
+
+.outside-what {
+  font-size: clamp(17px, 1.4vw, 20px);
+  font-weight: 650;
+}
+
+.outside-src {
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+/* How it works, What's real: newspaper columns with run-in heads */
+.columns {
+  columns: 3 260px;
+  column-gap: 40px;
+  column-rule: 1px solid var(--ink);
+}
+
+.real .columns {
+  columns: 4 220px;
+}
+
+.columns p {
+  margin-bottom: 14px;
+  break-inside: avoid;
+  hyphens: auto;
+}
+
+.runin {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.columns a {
+  font-weight: 750;
+  text-decoration-color: var(--red);
+}
+
+/* Back page */
+.backpage {
+  max-width: var(--max);
+  margin: 72px auto 0;
+  padding: 0 var(--gutter);
+}
+
+.backpage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  /* the logo is taller than the slab and the line under it: the slack goes above the slab, so the can rises above it */
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  gap: 18px 40px;
+}
+
+.backpage > * {
+  position: relative;
+}
+
+.backpage h2 {
+  grid-column: 1 / 3;
+  padding: 18px 22px 8px;
+  background: var(--red);
+  color: var(--paper);
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: clamp(64px, 10vw, 156px);
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+
+.backpage > p {
+  max-width: 52ch;
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.go-big {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  font-stretch: 70%;
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background-color 0.2s var(--ease);
+}
+
+.go-big:hover {
+  background: var(--red);
+}
+
+.go-big .i {
+  transition: transform 0.25s var(--ease);
+}
+
+.go-big:hover .i {
+  transform: translateX(4px);
+}
+
+.backpage .webgpu-note {
+  grid-column: 1 / 3;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* the brand logo standing alone at the back page's right, beside the slab and the line under it. The art's CN Tower
+   shaft is cut flat, so it reaches down through the gap above the colophon and its cut end stands exactly on the
+   colophon's heavy top rule; the can rises above the slab */
+.back-seal {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: end;
+  width: auto;
+  height: clamp(330px, 29vw, 420px);
+  margin-bottom: calc(-1 * var(--back-gap));
+}
+
+/* the no-WebGPU note adds a row under the button: the logo spans it too, so it still reaches the rule */
+.backpage:has(.webgpu-note:not([hidden])) .back-seal {
+  grid-row: 1 / span 3;
+}
+
+/* Colophon: credits and licences */
+.colophon {
+  max-width: var(--max);
+  margin: var(--back-gap) auto 0;
+  padding: 18px var(--gutter) 40px;
+  border-top: var(--rule-thick);
+  font-size: 14px;
+  line-height: 1.5;
+  columns: 2 360px;
+  column-gap: 40px;
+}
+
+.colophon p {
+  margin-bottom: 10px;
+  break-inside: avoid;
+}
+
+.colophon-name {
+  column-span: all;
+  margin-bottom: 14px;
+  font-stretch: var(--cond);
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 0.85;
+  text-transform: uppercase;
+}
+
+.colophon-small {
+  color: var(--ink-2);
+}
+
+/* ---------------------------------------------------------------- The one authored moment: the front page goes to press */
+@media (prefers-reduced-motion: no-preference) {
+  .mast-box {
+    animation: ink-in 0.7s var(--ease) both;
+  }
+
+  .coverstory h1 {
+    animation: press 0.9s 0.12s var(--ease) both;
+  }
+
+  .sticker {
+    animation: slap 0.5s 0.7s var(--ease) both;
+  }
+}
+
+@keyframes ink-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+@keyframes press {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(0.12em);
+  }
+  to {
+    clip-path: inset(0 0 -10% 0);
+  }
+}
+
+@keyframes slap {
+  from {
+    transform: rotate(-9deg) scale(1.25);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------- Narrower desktops and tablets */
+/* below 1024 px the crest and its balance squeeze the ears until "Outside, at Pearson" breaks onto a second line
+   (from about 960 px), and on phones the name already fills the width. Drop it and its balance there; the <picture>
+   in index.html uses the same breakpoint, so these widths never fetch it. From 1024 px it is 93 px or taller and the
+   ST on the can reads on a 2x screen */
+@media (max-width: 1023px) {
+  .mast-crest,
+  .mast-name::after {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .ride-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ride-story + .ride-story {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .getting-around {
+    grid-column: 1 / -1;
+    margin-top: 36px;
+  }
+}
+
+/* ---------------------------------------------------------------- Phone: masthead, cover with the search, then listings */
+@media (max-width: 860px) {
+  body {
+    font-size: 17px;
+  }
+
+  .mast {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 16px;
+    padding-top: 14px;
+  }
+
+  .mast-name {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    font-size: clamp(48px, 15.5vw, 96px);
+  }
+
+  .mast-issue,
+  .mast-weather {
+    font-size: 12px;
+  }
+
+  .mast .nb {
+    display: block;
+  }
+
+  /* under the name: the issue line on the left, the weather ear on the right */
+  .mast-right {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  .strip-go {
+    display: none;
+  }
+
+  .front {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .listings > .listing {
+    flex: none;
+  }
+
+  /* a narrow cover shows about a third of the frame: --cover-x (js/landing.js, from the frame's size) puts the cover
+     clips' tower, 68.5 % across the 16:9 source, 65 % across what is visible */
+  .frame-rest video,
+  .frame-rest .still[src*='clips/'] {
+    object-position: var(--cover-x, 70%) 50%;
+  }
+
+  /* taller than the rest of the screen needs, so the coverline block (bottom-anchored) sits low enough for the cover
+     clips' CN Tower pod (35-38 % down the frame) to stand clear above "TORONTO,"; the search still ends inside a
+     390 x 844 first screen */
+  .cover {
+    position: relative;
+    height: auto;
+    min-height: min(692px, calc(100svh - 102px));
+  }
+
+  /* John's must-keep wins on short phones: below about 840 px of height the taller cover would push the search past
+     the first screen (it ends at 836 px at 390 x 844), so fall back to the shorter cover; the pod may sit behind the
+     coverline there */
+  @media (max-height: 839px) {
+    .cover {
+      min-height: min(640px, calc(100svh - 150px));
+    }
+  }
+
+  /* icon only, but the button keeps its name ("Pause footage" / "Play footage") for assistive tech */
+  .cover-pause span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .cover-pause {
+    width: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sticker {
+    top: 16px;
+    left: 16px;
+    font-size: 13px;
+  }
+
+  .coverstory {
+    padding: 0 16px 12px;
+  }
+
+  .cover-dek {
+    margin: 8px 0 10px;
+  }
+
+  .cover-caption {
+    margin-top: 10px;
+  }
+
+  .coverstory h1 {
+    font-size: clamp(60px, 23vw, 120px);
+  }
+
+  .where {
+    flex-wrap: wrap;
+  }
+
+  .where label {
+    flex-basis: 100%;
+    padding: 8px 12px 6px;
+    font-size: 26px;
+  }
+
+  .where input {
+    height: 54px;
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .where button {
+    padding: 0 16px;
+    font-size: 20px;
+  }
+
+  .rail {
+    min-height: 0;
+    padding: 22px var(--gutter) 24px;
+    border-top: var(--rule-thick);
+    border-left: 0;
+  }
+
+  .listing {
+    grid-template-columns: 96px minmax(0, 1fr) auto;
+  }
+
+  .listing > img {
+    width: 96px;
+    height: 62px;
+  }
+
+  .listing.is-open {
+    background: none;
+    color: inherit;
+  }
+
+  .section {
+    padding-top: 48px;
+  }
+
+  .ride-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ride-story {
+    padding-right: 0;
+    border-right: 0;
+  }
+
+  .ride-story + .ride-story {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: var(--rule-thick);
+  }
+
+  .uptown-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px 16px;
+  }
+
+  .up-lead {
+    grid-column: 1 / -1;
+  }
+
+  .up + .up {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .up b {
+    font-size: 24px;
+  }
+
+  .readings thead {
+    display: none;
+  }
+
+  .readings tbody tr {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 8px 0 10px;
+  }
+
+  .readings td,
+  .readings tbody th {
+    padding: 0;
+  }
+
+  .readings td.num {
+    width: auto;
+    padding: 0;
+    font-size: 64px;
+  }
+
+  .readings td:last-child {
+    margin-top: 4px;
+    padding: 0;
+    text-align: left;
+  }
+
+  .outside {
+    grid-template-columns: 1fr;
+  }
+
+  .outside-src {
+    text-align: left;
+  }
+
+  .backpage {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    margin-top: 56px;
+  }
+
+  .backpage h2,
+  .backpage .webgpu-note {
+    grid-column: 1;
+  }
+
+  /* on phones the logo stands centred under the button, its cut shaft on the rule above the colophon */
+  .back-seal,
+  .backpage:has(.webgpu-note:not([hidden])) .back-seal {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: center;
+    height: 300px;
+    margin-top: 10px;
+  }
+
+  .backpage h2 {
+    padding: 14px 14px 6px;
+    font-size: clamp(56px, 17vw, 96px);
+  }
+
+  .go-big {
+    justify-self: start;
+    font-size: 26px;
+  }
+}

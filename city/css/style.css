@@ -1,0 +1,2756 @@
+/* css/style.css */
+/* HUD design system: quiet graphite glass in the corners of the screen, lake blue for whatever is active,
+   green street-name signs, so that the city itself stays the star */
+
+:root {
+  /* Surfaces */
+  --glass: rgba(18, 19, 22, 0.62);
+  --glass-strong: rgba(16, 17, 20, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --hover: rgba(255, 255, 255, 0.08);
+  --divider: rgba(255, 255, 255, 0.1);
+
+  /* Text */
+  --text: #f6f5f2;
+  --text-2: rgba(246, 245, 242, 0.68);
+  --text-3: rgba(246, 245, 242, 0.44);
+
+  /* Accents */
+  --accent: #2477cc; /* lake blue, as the landing page */
+  --accent-ink: #ffffff;
+  --sign-green: #0b6a46;
+  --highway: #c08a3e;
+  --ok: #5ee08f;
+  --warn: #ffc857;
+  --bad: #ff7a6b;
+
+  /* Shape & motion */
+  --edge: 20px;
+  --bar-h: 50px;
+  --r-panel: 16px;
+  --r-ctl: 10px;
+  --shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-sign: 'Overpass', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #0a0b0d;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  overscroll-behavior: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-sm {
+  width: 14px;
+  height: 14px;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 5px;
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  cursor: grab;
+}
+
+#canvas-container:active {
+  cursor: grabbing;
+}
+
+/* Soft scrims behind the HUD: keep small type legible over a bright midday street */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+body::before {
+  top: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+}
+
+body::after {
+  bottom: 0;
+  height: 210px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0));
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Glass panel
+   ------------------------------------------------------------------------------------------------------------------ */
+.panel {
+  background: var(--grain), var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-panel);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow);
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Loading screen
+   ------------------------------------------------------------------------------------------------------------------ */
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 90% at 50% 36%, #16304d 0%, #0b1726 55%, #05090f 100%);
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#loading-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: rise-in 0.8s var(--ease-out) both;
+}
+
+/* The ride: a 360 x 170 window onto the waterfront trail. Layers back to front: sky & sun, far skyline, near skyline
+   (the CN Tower's beacon blinking), trees, trail & lake, the trail's centre line, the lake's sparkles, the rider. Each
+   sliding layer is two copies of a seamless tile, moved one tile's width per loop; the speeds fall off with distance. */
+.ride {
+  position: relative;
+  width: min(380px, calc(100vw - 32px));
+  aspect-ratio: 360 / 170;
+  margin-bottom: 26px;
+  border-radius: 22px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 30px 70px -24px rgba(242, 183, 102, 0.45);
+}
+
+.ride svg {
+  display: block;
+}
+
+.ride-back,
+.ride-front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ride-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 200%;
+  height: 100%;
+  animation: ride-slide linear infinite;
+  will-change: transform;
+}
+
+.ride-layer > svg {
+  flex: none;
+  width: 50%;
+  height: 100%;
+}
+
+.ld-far { animation-duration: 90s; }
+.ld-near { animation-duration: 38s; }
+.ld-trees { animation-duration: 8.5s; }
+.ld-dashes { animation-duration: 5s; }
+.ld-sparkle-a { animation-duration: 4.2s; }
+
+.ld-sparkle-b {
+  animation: ride-slide 6.4s linear infinite, twinkle 1.7s ease-in-out infinite alternate;
+}
+
+/* the CN Tower's beacon, over the antenna's tip in both copies of the tile */
+.beacon {
+  position: absolute;
+  top: 7.1%;
+  left: 20.833%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%;
+  background: #ff5a44;
+  box-shadow: 0 0 6px 2px rgba(255, 90, 68, 0.7);
+  animation: beacon 2.2s steps(1, end) infinite;
+}
+
+.beacon + .beacon {
+  left: 70.833%;
+}
+
+.rider {
+  position: absolute;
+  left: 31%;
+  top: 55.9%;
+  width: 17.78%;
+  aspect-ratio: 64 / 48;
+}
+
+.rider-part {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* wheels turn at the trail's speed (5 s a tile, 9-unit radius); the crank and legs at an easy cadence */
+.wheel {
+  position: absolute;
+  top: 60.42%;
+  width: 28.125%;
+  height: 37.5%;
+  animation: spin 0.79s linear infinite;
+}
+
+.wheel-rear { left: 7.81%; }
+.wheel-front { left: 60.94%; }
+
+.crank {
+  transform-origin: 45.31% 79.17%;
+  animation: spin 1s linear infinite;
+}
+
+.leg {
+  transform-origin: 39.06% 42.7%;
+  animation: pedal 0.5s ease-in-out infinite alternate;
+}
+
+.leg-back {
+  animation-delay: -0.5s;
+}
+
+.rider-body {
+  animation: bob 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes ride-slide {
+  to { transform: translateX(-50%); }
+}
+
+@keyframes spin {
+  to { transform: rotate(1turn); }
+}
+
+@keyframes pedal {
+  from { transform: rotate(-13deg); }
+  to { transform: rotate(11deg); }
+}
+
+@keyframes bob {
+  to { transform: translateY(1.5%); }
+}
+
+@keyframes twinkle {
+  from { opacity: 0.25; }
+  to { opacity: 1; }
+}
+
+@keyframes beacon {
+  0%, 60% { opacity: 1; }
+  61%, 100% { opacity: 0.15; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ride *,
+  .ride-layer {
+    animation: none !important;
+  }
+}
+
+.loader-ends {
+  display: flex;
+  justify-content: space-between;
+  width: 240px;
+  margin: -8px 0 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.loader-title {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.loader-title span,
+.fullmap-title h2 span {
+  font-weight: 500;
+  color: #f4bf4f;
+}
+
+.loader-track {
+  position: relative;
+  width: 240px;
+  height: 3px;
+  margin: 26px 0 14px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.loader-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #f2b766);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+/* While the city is being built (main thread busy) the bar sweeps on the compositor; it fills once shaders compile */
+.loader-track.is-indeterminate .loader-fill {
+  width: 35%;
+  transform: translateX(-100%);
+  transition: none;
+  animation: loader-sweep 1.5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform;
+}
+
+#loading-status {
+  font-size: 12.5px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes loader-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(290%); }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   HUD layout: four corners plus the bottom centre, the middle of the screen stays clear
+   ------------------------------------------------------------------------------------------------------------------ */
+.hud {
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-out);
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.hud-top-left {
+  top: max(var(--edge), env(safe-area-inset-top));
+  left: max(var(--edge), env(safe-area-inset-left));
+}
+
+.hud-top-right {
+  top: var(--edge);
+  right: var(--edge);
+}
+
+.hud-bottom-left {
+  left: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.hud-bottom-center {
+  left: 50%;
+  bottom: var(--edge);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-bottom-right {
+  right: var(--edge);
+  bottom: var(--edge);
+}
+
+/* Clean view [H]: everything but the toggle itself steps out of the way */
+body.hud-minimized::before,
+body.hud-minimized::after {
+  opacity: 0;
+}
+
+body.hud-minimized .hud:not(.hud-top-right) {
+  opacity: 0;
+}
+
+body.hud-minimized .hud:not(.hud-top-right),
+body.hud-minimized .hud:not(.hud-top-right) > * {
+  pointer-events: none;
+}
+
+body.hud-minimized .hud-top-left { transform: translateY(-10px); }
+body.hud-minimized .hud-bottom-left,
+body.hud-minimized .hud-bottom-right { transform: translateY(12px); }
+body.hud-minimized .hud-bottom-center { transform: translate(-50%, 12px); }
+
+body.hud-minimized .toolbar > :not(#btn-toggle-hud) {
+  display: none;
+}
+
+/* Film mode (js/film.js, ?film=1): the city alone, no UI at all */
+body.film > :not(#canvas-container),
+body.film::before,
+body.film::after {
+  display: none !important;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Top left: brand
+   ------------------------------------------------------------------------------------------------------------------ */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: var(--bar-h);
+  padding: 0 18px 0 9px;
+}
+
+.city-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
+}
+
+.brand-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-titles h1 {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.repo-link {
+  flex: none;
+  padding: 3px 0;
+  color: var(--text-2);
+  font-size: 11px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.repo-link:hover,
+.repo-link:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.brand-subtitle {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#hud-fps {
+  font-weight: 650;
+  color: var(--text-2);
+}
+
+#hud-fps.fps-ok { color: var(--ok); }
+#hud-fps.fps-warn { color: var(--warn); }
+#hud-fps.fps-bad { color: var(--bad); }
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Top right: toolbar (time of day, teleport, map, clean view)
+   ------------------------------------------------------------------------------------------------------------------ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--bar-h);
+  padding: 0 5px;
+}
+
+.toolbar-divider {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  margin: 0 5px;
+  background: var(--divider);
+}
+
+.time-switch {
+  display: flex;
+  gap: 2px;
+}
+
+.time-btn {
+  height: 36px;
+  padding: 0 9px;
+  border-radius: var(--r-ctl);
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  color: var(--text-2);
+  transition: background-color 0.2s ease, color 0.2s ease, gap 0.35s var(--ease-out), padding 0.35s var(--ease-out);
+}
+
+.time-btn:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+/* The active time of day spells out its name */
+.time-btn .seg-label {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  transition: max-width 0.4s var(--ease-out), opacity 0.25s ease;
+}
+
+.time-btn.active,
+.time-btn.active:hover {
+  gap: 7px;
+  padding: 0 12px 0 10px;
+  background: var(--text);
+  color: #121314;
+}
+
+.time-btn.active .seg-label {
+  max-width: 120px;
+  opacity: 1;
+}
+
+/* Live (the live sky: Toronto's time & weather now, main.js): its dot glows red while live, and a hairline sets it
+   apart from the four fixed presets */
+.live-btn { margin-right: 3px; position: relative; }
+.live-btn::after { content: ''; position: absolute; right: -3px; top: 9px; bottom: 9px; width: 1px; background: var(--divider); }
+.live-btn.active { --live-dot: #e5322d; } /* (the dot inside the icon's <use> reads it) */
+.live-btn.active .seg-label { font-variant-numeric: tabular-nums; }
+
+.tool-btn {
+  height: 36px;
+  padding: 0 11px;
+  border-radius: var(--r-ctl);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);
+  transition: background-color 0.2s ease;
+}
+
+.tool-btn:hover,
+.tool-btn.is-open {
+  background: var(--hover);
+}
+
+.tool-btn .icon-sm {
+  margin-left: -2px;
+  color: var(--text-3);
+  transition: transform 0.3s var(--ease-out);
+}
+
+.tool-btn.is-open .icon-sm {
+  transform: rotate(180deg);
+}
+
+/* Multiplayer (multiplayer.js): how many are riding in this room; a click copies a link for a friend */
+.tool-btn[hidden] {
+  display: none;
+}
+
+.mp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d17a;
+  box-shadow: 0 0 0 3px rgba(52, 209, 122, 0.22);
+}
+
+.tool-btn.icon-only {
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+.icon-show {
+  display: none;
+}
+
+body.hud-minimized .icon-hide {
+  display: none;
+}
+
+body.hud-minimized .icon-show {
+  display: block;
+}
+
+.tool-btn:active,
+.time-btn:active,
+.icon-btn:active,
+.mode-btn:active,
+.camera-current:active,
+.pop-item:active {
+  transform: scale(0.97);
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Popovers (teleport destinations, cameras)
+   ------------------------------------------------------------------------------------------------------------------ */
+.popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 6px;
+  min-width: 264px;
+  max-height: calc(100vh - 2 * var(--edge) - 64px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  color: var(--text);
+  background: var(--grain), var(--glass-strong);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 28px 60px -22px rgba(0, 0, 0, 0.8), 0 4px 14px rgba(0, 0, 0, 0.3);
+  transform-origin: top right;
+  transition: opacity 0.18s ease, transform 0.26s var(--ease-out), overlay 0.26s allow-discrete, display 0.26s allow-discrete;
+}
+
+.popover[data-side='above'] {
+  transform-origin: bottom right;
+}
+
+.popover:not(:popover-open) {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+
+.popover[data-side='above']:not(:popover-open) {
+  transform: translateY(4px) scale(0.98);
+}
+
+@starting-style {
+  .popover:popover-open {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  .popover[data-side='above']:popover-open {
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+.pop-title {
+  padding: 9px 10px 6px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.pop-title:not(:first-child) {
+  margin-top: 5px;
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+}
+
+.pop-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text);
+  transition: background-color 0.15s ease;
+}
+
+.pop-item:hover {
+  background: var(--hover);
+}
+
+.pop-item.active,
+.pop-item.active:hover {
+  background: var(--text);
+  color: #121314;
+}
+
+.pop-item.active kbd {
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: none;
+}
+
+.tp-btn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.pop-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Bottom left: street-name signs over the GPS radar
+   ------------------------------------------------------------------------------------------------------------------ */
+.location {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.location-place {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 14px rgba(0, 0, 0, 0.4);
+  animation: rise-in 0.4s var(--ease-out) both;
+}
+
+.location-signs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  animation: rise-in 0.4s var(--ease-out) both;
+}
+
+.location-near {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Green blade, white inset border, road-sign lettering: the street-name sign on the corner */
+.street-sign {
+  max-width: 210px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 9px 13px 7px;
+  font-family: var(--font-sign);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--sign-green);
+  border-radius: 6px;
+  outline: 1.5px solid rgba(255, 255, 255, 0.92);
+  outline-offset: -4px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), 0 10px 22px -10px rgba(0, 0, 0, 0.75);
+}
+
+.radar {
+  position: relative;
+  width: 288px;
+  height: 184px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #0a1118;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  cursor: pointer;
+  transition: transform 0.35s var(--ease-out);
+}
+
+.radar:hover {
+  transform: translateY(-2px);
+}
+
+/* Inner rim: a soft vignette so the map sinks into the frame */
+.radar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 0 30px rgba(0, 0, 0, 0.55);
+}
+
+#minimap-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.radar-north {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+  background: rgba(10, 12, 15, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  pointer-events: none;
+}
+
+.radar-key {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(10, 12, 15, 0.6);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.radar:hover .radar-key {
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Bottom centre: travel mode switcher & keyboard guide
+   ------------------------------------------------------------------------------------------------------------------ */
+.controls-hint {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  max-width: 600px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+  pointer-events: none;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+  animation: rise-in 0.35s var(--ease-out) both;
+}
+
+.hint kbd {
+  color: #ffffff;
+  background: rgba(12, 13, 15, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  text-shadow: none;
+}
+
+.hint-label {
+  margin-left: 4px;
+}
+
+.mode-switch {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  padding: 5px;
+}
+
+/* The green pill glides to the selected mode (positioned by main.js) */
+.mode-indicator {
+  position: absolute;
+  z-index: 0;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: var(--ind-w, 0px);
+  transform: translateX(var(--ind-x, 0px));
+  border-radius: 12px;
+  background: var(--accent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 4px 12px -4px rgba(0, 0, 0, 0.5);
+  transition: transform 0.45s var(--ease-out), width 0.45s var(--ease-out);
+}
+
+.mode-switch.no-anim .mode-indicator {
+  transition: none;
+}
+
+.mode-btn {
+  position: relative;
+  z-index: 1;
+  height: 42px;
+  padding: 0 12px 0 11px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-2);
+  transition: color 0.25s ease, background-color 0.2s ease;
+}
+
+.mode-btn:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.mode-btn.active,
+.mode-btn.active:hover {
+  color: var(--accent-ink);
+  background: transparent;
+}
+
+.mode-btn .icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.7;
+}
+
+.mode-btn kbd {
+  margin-left: 2px;
+  transition: color 0.25s ease, background-color 0.25s ease;
+}
+
+.mode-btn.active kbd {
+  color: rgba(23, 20, 10, 0.62);
+  background: rgba(23, 20, 10, 0.1);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Bottom right: speed cluster & camera switcher
+   ------------------------------------------------------------------------------------------------------------------ */
+.cluster {
+  width: 272px;
+  overflow: hidden;
+}
+
+.gauge {
+  padding: 13px 16px 15px;
+}
+
+.gauge-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gauge-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gauge-alt {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+body[data-mode='helicopter'] .gauge-alt {
+  opacity: 1;
+}
+
+.gauge-alt-label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gauge-speed {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+#hud-speed {
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-unit {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gauge-meter {
+  position: relative;
+  height: 4px;
+  margin-top: 12px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+/* Speed as a share of the mode's top speed; it turns green on boost */
+#hud-speed-meter {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--text);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 0.25s linear, background-color 0.2s ease;
+}
+
+body.is-boosting #hud-speed-meter {
+  background: var(--accent);
+}
+
+/* The car's condition (aalghooneh/slop-toronto): full and green when new, through amber to red as it is damaged (car
+   mode only); the wreck notice while it waits to restart */
+.gauge-health {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+body[data-mode='car'] .gauge-health {
+  display: flex;
+}
+
+.gauge-health-label {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gauge-health .gauge-meter {
+  flex: 1;
+  margin-top: 0;
+}
+
+#hud-health-meter {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ok);
+  transform-origin: left center;
+  transition: transform 0.2s ease-out, background-color 0.3s ease;
+}
+
+#hud-health-meter.is-warn { background: var(--warn); }
+#hud-health-meter.is-bad { background: var(--bad); }
+
+.wrecked {
+  position: fixed;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  z-index: 30;
+  padding: 18px 34px;
+  border-radius: var(--r-panel);
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  text-align: center;
+  pointer-events: none;
+}
+
+.wrecked[hidden] {
+  display: none;
+}
+
+.wrecked-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bad);
+}
+
+.wrecked-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.camera-switch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-top: 1px solid var(--divider);
+}
+
+.icon-btn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-ctl);
+  display: inline-grid;
+  place-items: center;
+  color: var(--text-2);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.camera-current {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: var(--r-ctl);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.camera-current:hover,
+.camera-current.is-open {
+  background: var(--hover);
+}
+
+.camera-current .icon {
+  color: var(--text-3);
+}
+
+#hud-active-camera {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Full-screen interactive street map ([M])
+   ------------------------------------------------------------------------------------------------------------------ */
+.fullmap-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #0a1118;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.fullmap-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.fullmap-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.fullmap-canvas-wrap.is-panning {
+  cursor: grabbing;
+}
+
+#fullmap-canvas {
+  touch-action: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fullmap-header {
+  position: absolute;
+  top: var(--edge);
+  left: var(--edge);
+  right: var(--edge);
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.fullmap-header > * {
+  pointer-events: auto;
+}
+
+.fullmap-modal:not(.hidden) .fullmap-header,
+.fullmap-modal:not(.hidden) .map-controls,
+.fullmap-modal:not(.hidden) .fullmap-footer {
+  animation: rise-in 0.45s var(--ease-out) both;
+}
+
+.fullmap-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 20px 9px 11px;
+}
+
+.fullmap-title h2 {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.fullmap-subtitle {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fullmap-search-wrap {
+  flex: 0 1 440px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  color: var(--text-3);
+  cursor: text;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.fullmap-search-wrap:focus-within {
+  color: var(--text-2);
+  border-color: rgba(255, 255, 255, 0.24);
+  background: var(--grain), var(--glass-strong);
+}
+
+.fullmap-search {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: none;
+  border: 0;
+  outline: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  user-select: text;
+}
+
+.fullmap-search::placeholder {
+  color: var(--text-3);
+}
+
+.fullmap-close {
+  margin-left: auto;
+  height: auto;
+  padding: 0 14px 0 12px;
+  border-radius: var(--r-panel);
+}
+
+.fullmap-close:hover {
+  background: var(--grain), var(--glass-strong);
+}
+
+/* (centred with `translate`, which the rise-in entrance animation on `transform` leaves alone) */
+.map-controls {
+  position: absolute;
+  top: 50%;
+  right: var(--edge);
+  translate: 0 -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-compass {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.map-compass svg {
+  width: 44px;
+  height: 44px;
+}
+
+.map-compass text {
+  font: 800 7.5px var(--font-sans);
+  fill: #ffffff;
+}
+
+.map-zoom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 14px;
+}
+
+.fullmap-footer {
+  position: absolute;
+  left: 50%;
+  bottom: var(--edge);
+  translate: -50% 0;
+  display: flex;
+  max-width: min(560px, calc(100% - 2 * var(--edge) - 2 * 200px));
+}
+
+.fullmap-status {
+  min-width: 0;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fullmap-legend {
+  position: absolute;
+  right: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.fullmap-modal:not(.hidden) .fullmap-legend {
+  animation: rise-in 0.45s var(--ease-out) both;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-swatch {
+  flex: none;
+  display: inline-block;
+}
+
+.player-swatch {
+  width: 10px;
+  height: 11px;
+  background: #ffffff;
+  clip-path: polygon(50% 0, 100% 100%, 50% 78%, 0 100%);
+}
+
+.landmark-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #0b0f14, 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+.gps-swatch,
+.bridge-swatch {
+  width: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.gps-swatch { background: #2f8bff; }
+.bridge-swatch { background: var(--highway); }
+
+.legend-counts {
+  padding-left: 14px;
+  border-left: 1px solid var(--divider);
+  color: var(--text-3);
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------------------------------------------------------------ */
+@media (max-width: 1800px) {
+  .legend-counts { display: none; }
+}
+
+@media (max-width: 1360px) {
+  .fullmap-legend { display: none; }
+}
+
+@media (max-width: 1240px) {
+  .controls-hint { display: none; }
+  .mode-btn kbd { display: none; }
+}
+
+@media (max-width: 1080px) {
+  .mode-label,
+  .tool-label,
+  .tool-btn kbd { display: none; }
+  .mode-btn { padding: 0 12px; }
+  .tool-btn:not(.icon-only):not(.fullmap-close) { gap: 4px; padding: 0 9px; }
+}
+
+@media (max-width: 820px) {
+  :root { --edge: 12px; }
+  .hud-top-left { top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px); }
+  .brand > .city-badge,
+  .brand-heading h1,
+  .brand-subtitle { display: none; }
+  .brand { height: 44px; padding: 0 12px; }
+  .repo-link { display: flex; align-items: center; gap: 4px; min-height: 44px; font-size: 12px; }
+  .radar { width: 220px; height: 148px; }
+  .cluster { width: 220px; }
+  #hud-speed { font-size: 34px; }
+  .fullmap-title > div { display: none; }
+  .fullmap-title { padding: 9px; }
+  .fullmap-footer { max-width: calc(100% - 2 * var(--edge)); bottom: calc(var(--edge) + 34px); }
+  .map-controls { top: auto; bottom: calc(var(--edge) + 96px); translate: none; }
+}
+
+@media (max-width: 620px) {
+  .time-btn.active .seg-label { display: none; }
+  .time-btn.active { padding: 0 9px; gap: 0; }
+  .radar { display: none; }
+  .hud-bottom-right { bottom: calc(var(--edge) + 64px); }
+  .gauge { display: none; }
+  .camera-switch { border-top: 0; }
+}
+
+/* Touch controls reserve the bottom corners; mode and camera selection remain within reach. */
+#touch-controls {
+  position: fixed;
+  z-index: 12;
+  left: max(var(--edge), env(safe-area-inset-left));
+  right: max(var(--edge), env(safe-area-inset-right));
+  bottom: calc(max(var(--edge), env(safe-area-inset-bottom)) + 72px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+  -webkit-touch-callout: none;
+}
+
+#touch-controls[hidden],
+.touch-action[hidden] { display: none; }
+
+.touch-movement { text-align: center; }
+
+#touch-stick {
+  position: relative;
+  width: 136px;
+  height: 136px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 32%, transparent 33%), var(--glass);
+  box-shadow: var(--shadow), inset 0 0 0 12px rgba(255, 255, 255, 0.025);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-stick-axis::before,
+.touch-stick-axis::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.12);
+}
+.touch-stick-axis::before { top: 16px; bottom: 16px; width: 1px; left: 50%; }
+.touch-stick-axis::after { left: 16px; right: 16px; height: 1px; top: 50%; }
+
+#touch-stick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(246, 245, 242, 0.8);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transform: translate(calc(-50% + var(--stick-x, 0px)), calc(-50% + var(--stick-y, 0px)));
+  pointer-events: none;
+}
+
+#touch-stick.is-pressed #touch-stick-knob { background: var(--accent); border-color: var(--accent); }
+
+.touch-caption,
+.touch-look-hint {
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 550;
+  text-shadow: 0 1px 5px #000;
+}
+.touch-caption { display: block; margin-top: 8px; }
+.touch-look-hint {
+  position: fixed;
+  top: calc(max(var(--edge), env(safe-area-inset-top)) + 120px);
+  right: max(var(--edge), env(safe-area-inset-right));
+  padding: 4px;
+}
+
+.touch-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 64px);
+  gap: 10px;
+  padding-bottom: 22px;
+}
+.touch-action {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: var(--glass-strong);
+  box-shadow: var(--shadow);
+  font-size: 11px;
+  font-weight: 650;
+  pointer-events: auto;
+  touch-action: none;
+}
+.touch-action > [aria-hidden] { font-size: 23px; line-height: 1; }
+.touch-boost { grid-column: 2; border-color: rgba(255, 194, 26, 0.65); color: var(--accent); }
+.touch-action.is-pressed { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+
+body.touch-enabled .controls-hint,
+body.touch-enabled .radar,
+body.touch-enabled .gauge,
+body.touch-enabled kbd,
+body.touch-enabled .toolbar-divider,
+body.touch-enabled .seg-label { display: none; }
+
+body.touch-enabled .hud-top-right { top: max(var(--edge), env(safe-area-inset-top)); right: max(var(--edge), env(safe-area-inset-right)); }
+body.touch-enabled .toolbar { gap: 2px; padding: 4px; }
+body.touch-enabled .time-btn,
+body.touch-enabled .time-btn.active { height: 44px; min-width: 44px; padding: 0 8px; gap: 0; }
+body.touch-enabled .tool-btn { min-width: 44px; min-height: 44px; }
+/* A phone is narrower than Live, the four presets and the tools: the toolbar keeps to the screen and the time buttons
+   scroll sideways inside it (main.js keeps the chosen one in view) instead of running off the left edge */
+body.touch-enabled .toolbar { max-width: calc(100vw - 2 * var(--edge)); }
+body.touch-enabled .toolbar > * { flex: none; }
+body.touch-enabled .toolbar > .time-switch { flex: 0 1 auto; min-width: 92px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; scroll-snap-type: x proximity; }
+body.touch-enabled .time-switch::-webkit-scrollbar { display: none; }
+body.touch-enabled .time-switch > .time-btn { flex: none; scroll-snap-align: start; }
+body.touch-enabled .tool-label { display: none; }
+body.touch-enabled .hud-bottom-center { bottom: max(var(--edge), env(safe-area-inset-bottom)); }
+body.touch-enabled .mode-label { display: block; font-size: 10px; }
+body.touch-enabled .mode-btn { width: 62px; height: 48px; padding: 0; flex-direction: column; justify-content: center; gap: 3px; }
+body.touch-enabled .hud-bottom-right { top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px); right: max(var(--edge), env(safe-area-inset-right)); bottom: auto; }
+body.touch-enabled .cluster { width: 230px; }
+body.touch-enabled .camera-switch { border: 0; }
+body.touch-enabled .camera-switch .icon-btn { width: 44px; height: 44px; }
+body.touch-enabled .hud-bottom-left { left: max(var(--edge), env(safe-area-inset-left)); bottom: calc(max(var(--edge), env(safe-area-inset-bottom)) + 254px); max-width: calc(100% - 2 * var(--edge)); }
+body.touch-enabled .fullmap-header { top: max(var(--edge), env(safe-area-inset-top)); left: max(var(--edge), env(safe-area-inset-left)); right: max(var(--edge), env(safe-area-inset-right)); }
+body.touch-enabled .map-controls .icon-btn { width: 44px; height: 44px; }
+body.touch-enabled .pop-item { min-height: 44px; }
+
+@media (max-width: 360px) {
+  body.touch-enabled .toolbar { width: 194px; height: auto; flex-wrap: wrap; justify-content: center; }
+  body.touch-enabled .hud-bottom-right { top: calc(max(var(--edge), env(safe-area-inset-top)) + 114px); }
+  .touch-look-hint { top: calc(max(var(--edge), env(safe-area-inset-top)) + 172px); }
+}
+
+@media (max-height: 500px) {
+  body.touch-enabled .hud-bottom-left { display: none; }
+  body.touch-enabled .hud-bottom-right { top: calc(max(var(--edge), env(safe-area-inset-top)) + 58px); }
+  #touch-controls { bottom: max(var(--edge), env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Tour guide: search, place card, directions, navigation (tour-guide.js)
+   ------------------------------------------------------------------------------------------------------------------ */
+.hud-top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(392px, calc(100vw - 2 * var(--edge)));
+  max-height: calc(100vh - 2 * var(--edge) - 300px);
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--bar-h);
+  padding: 0 6px 0 7px;
+  border-radius: 999px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.brand-home {
+  text-decoration: none;
+  flex: none;
+}
+
+.search-icon {
+  color: var(--text-3);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  user-select: text;
+}
+
+.search-input::placeholder {
+  color: var(--text-3);
+}
+
+.search-box:focus-within {
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--shadow), 0 0 0 2px rgba(0, 135, 81, 0.75);
+}
+
+.search-kbd {
+  margin-right: 2px;
+}
+
+.search-box:focus-within .search-kbd,
+.search-clear:not(.show) {
+  display: none;
+}
+
+.search-clear.show ~ .search-kbd,
+.search-box:has(.search-clear.show) .search-kbd {
+  display: none;
+}
+
+.search-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--divider);
+}
+
+.directions-btn {
+  color: #6fb8ff;
+}
+
+.directions-btn .icon {
+  width: 21px;
+  height: 21px;
+}
+
+/* Suggestions */
+.ac-list {
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--grain), var(--glass-strong);
+  z-index: 30;
+}
+
+.ac-list[hidden] {
+  display: none;
+}
+
+.dir-field .ac-list,
+.fullmap-search-wrap .ac-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+}
+
+.fullmap-search-wrap {
+  position: relative;
+}
+
+.ac-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 10px;
+  border-radius: var(--r-ctl);
+  cursor: pointer;
+}
+
+.ac-item.active {
+  background: var(--hover);
+}
+
+.ac-icon,
+.pc-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  background: #3b4250;
+}
+
+.ac-icon .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.kind-landmark { background: #008751; }
+.kind-district { background: #5b6472; }
+.kind-street { background: #3a4049; }
+.kind-mylocation { background: #2f8bff; }
+.cat-hotel { background: #b03a5b; }
+.cat-bank { background: #23589a; }
+.cat-food { background: #c4581f; }
+.cat-worship { background: #2d7a4c; }
+.cat-fuel { background: #b42d2d; }
+.cat-health { background: #d0343c; }
+.cat-education { background: #3c5f9b; }
+.cat-market, .cat-shop { background: #7b3d91; }
+.cat-government { background: #00704a; }
+.cat-office { background: #4a5260; }
+.cat-leisure { background: #127d74; }
+.cat-transport { background: #a07800; }
+.cat-art { background: #9a4a2e; }
+.cat-heritage { background: #6b5a3e; }
+
+.ac-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac-name {
+  font-size: 14px;
+  font-weight: 450;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-name b {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.ac-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-dist {
+  flex: none;
+  font-size: 12px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-empty {
+  padding: 12px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.btn-primary:hover {
+  background: #00a062;
+}
+
+.btn-danger {
+  color: #fff;
+  background: #c73a32;
+  box-shadow: none;
+}
+
+.btn-danger:hover {
+  background: #de463d;
+}
+
+.btn-sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.btn.active {
+  color: #fff;
+  background: #2f8bff;
+}
+
+/* Place card */
+.pc-city-info {font-size:13px;line-height:1.45;max-height:32vh;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;margin:0 0 12px;}
+.pc-city-info[hidden] {display:none;}
+.pc-city-info p {margin:0 0 8px;}
+.pc-city-info .pc-source {font-size:12px;color:var(--text-2);}
+.pc-related {display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.pc-related .btn {font-size:12px;text-align:left;white-space:normal;}
+.place-card {
+  padding: 16px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.place-card[hidden],
+.directions[hidden],
+.nav-banner[hidden],
+.map-context[hidden],
+.help-modal[hidden] {
+  display: none;
+}
+
+.pc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pc-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.pc-titles {
+  flex: 1;
+  min-width: 0;
+}
+
+.pc-titles h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.pc-sub {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.pc-facts {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+}
+
+.pc-fact {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.pc-fact .icon {
+  color: var(--text-3);
+}
+
+.pc-actions,
+.dir-actions,
+.ctx-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Directions */
+.directions {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 12px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.dir-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.travel-modes {
+  display: flex;
+  gap: 4px;
+}
+
+.travel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.travel-btn:hover {
+  background: var(--hover);
+}
+
+.travel-btn.active {
+  color: #fff;
+  background: var(--accent);
+}
+
+.dir-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 6px;
+}
+
+.dir-dots {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 14px;
+}
+
+.dot-from,
+.dot-to {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.dot-from {
+  border: 2.5px solid var(--text-2);
+}
+
+.dot-to {
+  background: #e8453c;
+}
+
+.dot-line {
+  width: 2px;
+  height: 22px;
+  background-image: linear-gradient(var(--text-3) 50%, transparent 50%);
+  background-size: 2px 5px;
+}
+
+.dir-inputs {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+}
+
+.dir-field {
+  position: relative;
+}
+
+.dir-field input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--r-ctl);
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  user-select: text;
+}
+
+.dir-field input:focus {
+  border-color: rgba(0, 135, 81, 0.9);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.dir-summary {
+  margin-top: 8px;
+  padding: 12px 4px 4px;
+  border-top: 1px solid var(--divider);
+}
+
+.dir-summary[hidden] {
+  display: none;
+}
+
+.dir-totals {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.dir-time {
+  font-size: 22px;
+  font-weight: 700;
+  color: #5ee08f;
+  letter-spacing: -0.01em;
+}
+
+.dir-dist {
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.dir-via {
+  margin: 2px 0 12px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+
+.dir-status {
+  padding: 8px 4px 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.dir-steps {
+  list-style: none;
+  margin-top: 6px;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 34vh;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  padding: 9px 6px;
+  border-radius: var(--r-ctl);
+  cursor: pointer;
+}
+
+.step:hover {
+  background: var(--hover);
+}
+
+.step-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  color: var(--text);
+}
+
+.step-instr {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.step-dist {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Turn-by-turn banner: at the top of the guide's column, in place of the search box while navigating */
+.nav-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.nav-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #0d6b45;
+  color: #fff;
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+
+.icon-lg {
+  width: 44px;
+  height: 44px;
+  stroke-width: 2.2;
+}
+
+.nav-dist {
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.nav-instr {
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 550;
+  line-height: 1.3;
+}
+
+.nav-sub {
+  display: grid;
+  gap: 8px;
+  padding: 10px 14px 12px;
+  border-radius: 0 0 var(--r-panel) var(--r-panel);
+  border-top: 0;
+  background: var(--grain), var(--glass-strong);
+}
+
+.nav-then {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.nav-then:empty {
+  display: none;
+}
+
+.nav-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #5ee08f;
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-meta span + span {
+  color: var(--text-2);
+}
+
+.nav-actions {
+  display: flex;
+  gap: 8px;
+}
+
+body.navigating .controls-hint,
+body.navigating #search-box,
+body.navigating #search-results,
+body.navigating #place-card {
+  display: none;
+}
+
+body.autodriving .nav-main {
+  background: linear-gradient(90deg, #0d6b45, #145fae);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 120px;
+  z-index: 60;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--text);
+  background: rgba(16, 17, 20, 0.92);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.3s var(--ease-out);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Map: tap a spot */
+.map-context {
+  position: absolute;
+  z-index: 40;
+  width: 290px;
+  padding: 12px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.ctx-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ctx-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ctx-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.place-swatch {
+  width: 8px;
+  height: 8px;
+  background: #ffa463;
+  border-radius: 50%;
+}
+
+/* Help */
+.help-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 6, 8, 0.55);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.help-card {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 22px 24px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.help-head h2 {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.help-sec {
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.help-sec.current {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  background: rgba(0, 135, 81, 0.12);
+}
+
+.help-sec:first-child {
+  grid-column: 1 / -1;
+}
+
+.help-sec h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.help-sec ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.help-sec li kbd {
+  margin: 0 1px;
+}
+
+.help-sec li .icon {
+  vertical-align: -3px;
+}
+
+.help-foot {
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.help-fps {
+  white-space: nowrap;
+}
+
+.help-touch,
+body.touch-enabled .help-keys,
+body.touch-enabled .help-sec[data-help-mode] {
+  display: none;
+}
+
+body.touch-enabled .help-touch {
+  display: block;
+}
+
+.directions {
+  overflow: hidden;
+}
+
+.hud-top-left > * {
+  flex-shrink: 0;
+}
+
+.hud-top-left > .directions {
+  flex-shrink: 1;
+}
+
+@media (max-width: 820px) {
+  .hud-top-left { top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px); }
+  .search-kbd { display: none; }
+}
+
+/* Touch screens: the guide's panels end above the joystick; the toast clears it */
+body.touch-enabled .hud-top-left {
+  top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px);
+  max-height: calc(100svh - max(var(--edge), env(safe-area-inset-top)) - 62px - 260px);
+}
+
+body.touch-enabled .toast {
+  bottom: calc(max(var(--edge), env(safe-area-inset-bottom)) + 250px);
+}
+
+body.touch-enabled .nav-dist { font-size: 22px; }
+body.touch-enabled .nav-instr { font-size: 15px; }
+body.touch-enabled .btn-sm { height: 38px; }
+body.touch-enabled .ac-item { min-height: 48px; }
+
+/* Phones: one column. Toolbar, then the guide's column across the width; the camera switch drops to the lower right,
+   above the action buttons, and steps aside (with the street signs) while a panel is open */
+@media (max-width: 700px) {
+  body.touch-enabled .hud-top-left,
+  .hud-top-left {
+    left: max(var(--edge), env(safe-area-inset-left));
+    right: max(var(--edge), env(safe-area-inset-right));
+    width: auto;
+  }
+  body.touch-enabled .hud-bottom-right {
+    top: auto;
+    bottom: calc(max(var(--edge), env(safe-area-inset-bottom)) + 196px);
+  }
+  body.touch-enabled .cluster { width: 196px; }
+  body.touch-enabled .hud-bottom-left { bottom: calc(max(var(--edge), env(safe-area-inset-bottom)) + 258px); }
+  .touch-look-hint { display: none; }
+  body.directions-open .hud-bottom-left,
+  body.directions-open .hud-bottom-right,
+  body.place-open .hud-bottom-left,
+  body.place-open .hud-bottom-right,
+  body.navigating .hud-bottom-left {
+    display: none;
+  }
+  .dir-steps { max-height: none; }
+  .pc-actions .btn { flex: 1; padding: 0 10px; }
+  .map-context { width: min(290px, calc(100vw - 24px)); }
+  .help-modal { padding: 10px; }
+  .help-card { padding: 18px 16px; }
+}
+
+/* Short landscape phones: a narrower column on the left */
+@media (max-height: 500px) {
+  body.touch-enabled .hud-top-left {
+    width: min(360px, 46vw);
+    max-height: calc(100svh - 74px);
+  }
+}
+
+/* Logo in the search bar & on the map */
+.brand-home img,
+.map-logo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  flex: none;
+  transition: transform 0.25s var(--ease-out);
+}
+
+.brand-home:hover img {
+  transform: rotate(-6deg) scale(1.06);
+}
+
+/* Your real location */
+.locate-btn {
+  color: #6fb8ff;
+}
+
+.locate-btn.busy .icon,
+#map-real-location.busy .icon {
+  animation: locating 1s ease-in-out infinite;
+}
+
+@keyframes locating {
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+.locate-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 550;
+  background: var(--grain), var(--glass-strong);
+}
+
+.locate-prompt[hidden],
+.loc-card[hidden] {
+  display: none;
+}
+
+.locate-prompt > .icon {
+  color: #6fb8ff;
+}
+
+.locate-prompt > span {
+  flex: 1;
+}
+
+.loc-card {
+  padding: 16px;
+  background: var(--grain), var(--glass-strong);
+}
+
+.loc-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  background: #1a73e8;
+}
+
+.loc-icon.status-fct { background: #5b6472; }
+.loc-icon.status-away { background: #8a6d1f; }
+.loc-icon.status-error { background: #c73a32; }
+
+.loc-acc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.loc-actions {
+  margin-top: 14px;
+}
+
+.loc-actions:empty {
+  display: none;
+}
+
+.real-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1a73e8;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* ------------------------------------------------------------------------------------------------------------------
+   Riding a streetcar (streetcar-ride.js): the board / get-off prompt, the route panel, the blink on & off
+   ------------------------------------------------------------------------------------------------------------------ */
+.hud-top-center {
+  transition: opacity 0.2s ease;
+  top: max(var(--edge), env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ride-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 16px 0 10px;
+  font: 600 13.5px/1.2 var(--font-sans);
+  color: var(--text);
+  cursor: pointer;
+  animation: rise-in 0.35s var(--ease-out) both;
+}
+.ride-prompt kbd { background: #c81f27; color: #fff; box-shadow: none; }
+.ride-prompt:hover:not(:disabled) { background: var(--grain), var(--glass-strong); }
+.ride-prompt.is-hint { cursor: default; color: var(--text-2); font-weight: 550; }
+.ride-prompt.is-hint kbd { display: none; }
+.ride-prompt[hidden] { display: none; }
+
+.ride-hud {
+  display: grid;
+  gap: 6px;
+  min-width: 300px;
+  max-width: min(440px, calc(100vw - 2 * var(--edge)));
+  padding: 12px 14px;
+  color: var(--text);
+}
+.ride-hud[hidden] { display: none; }
+.ride-head { display: flex; align-items: center; gap: 10px; }
+.ride-num {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font: 800 17px/1 var(--font-sans);
+  color: #fff;
+  background: #c81f27; /* TTC red */
+  letter-spacing: 0.01em;
+}
+.ride-route { font: 650 15px/1.25 var(--font-sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ride-next { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.ride-next-label { flex: none; font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: #ffae2a; }
+.ride-next-name { font: 600 14px/1.3 var(--font-sign); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ride-status {
+  justify-self: start;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 12px/1.3 var(--font-sans);
+  color: var(--text-2);
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+.ride-status.is-open { color: #0d2a12; background: var(--ok); }
+.ride-status.is-requested { color: #2a1d00; background: var(--warn); }
+
+.ride-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.ride-fade.show { opacity: 0.85; transition-duration: 0.08s; }
+
+/* aboard: the joystick & the walking / cycling actions step aside */
+body.riding-transit .touch-movement,
+body.riding-transit .touch-actions { visibility: hidden; }
+
+@media (max-width: 820px) {
+  .hud-top-center { top: calc(max(var(--edge), env(safe-area-inset-top)) + 62px); }
+  .ride-hud { min-width: 0; padding: 10px 12px; }
+}
+
+.ride-cancel { min-height: 44px; border: 0; background: transparent; color: var(--text-2); cursor: pointer; text-align: left; font: 500 12px/1.3 var(--font-sans); }
+.ride-status:disabled { cursor: default; opacity: 0.65; }
+@media (prefers-reduced-motion: reduce) { .ride-fade, .ride-fade.show { transition: none; } .ride-prompt { animation: none; } }
+
+@media (max-width: 820px) {
+  body.riding-transit .hud-top-center, body.in-subway .hud-top-center { top: calc(max(var(--edge), env(safe-area-inset-top)) + 120px); left: var(--edge); right: var(--edge); transform: none; }
+  body.riding-transit .ride-hud, body.in-subway .ride-hud { width: 100%; max-width: 100%; box-sizing: border-box; }
+  .ride-route { font-size: 14px; }
+}
+
+body.in-subway .ride-num { background: #007f3e; }
+
+body.in-subway:not(.riding-transit) [data-touch-action="up"] { visibility: hidden; }

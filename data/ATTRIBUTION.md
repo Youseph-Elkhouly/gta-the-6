@@ -32,6 +32,16 @@ and processed into browser-ready assets under `public/data/`.
   concrete color map is used on pedestrian paths and ground surfaces. The brick
   maps are retained under `public/textures/` for facade material work.
 
+## City engine — Slop Toronto (MIT)
+
+The playable downtown scene under `city/` is the public [slop-toronto](https://github.com/johnfewell/slop-toronto)
+engine (commit `340d6bed`, MIT © 2026 Mr.doob and John Fewell), itself a fork of
+[mrdoob/slop-newyork](https://github.com/mrdoob/slop-newyork). Full third-party credits stay in `city/CREDITS.md`
+and `city/LICENSE`. Do not strip those notices.
+
+Toronto geometry in that build comes from City of Toronto Open Data and © OpenStreetMap contributors (ODbL),
+as recorded in `city/CREDITS.md`. The older massing viewer in `src/` is unchanged.
+
 ## Playable area
 
 - ~700 m × 700 m square centred near the CN Tower (lat 43.6440, lon -79.3888),

@@ -6,6 +6,7 @@
   "description": "GTA: THE 6 — Phase 1: an explorable, geographically accurate 3D model of downtown Toronto around the CN Tower, built with Three.js.",
   "scripts": {
     "dev": "vite",
+    "city": "node city/tools/dev-server.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
