@@ -17,7 +17,7 @@ Both usually arrive from a shared link or a post and decide within a few seconds
 
 ## Product Purpose
 
-GTA: The 6 is downtown Toronto and the waterfront in 3D, in the browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge along the lake to Sugar Beach, past the CN Tower and through downtown, and ride the 504 streetcar or the subway across the Don Valley.
+Larp Theft Auto: The 6 is downtown Toronto and the waterfront in 3D, in the browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge along the lake to Sugar Beach, past the CN Tower and through downtown, and ride the 504 streetcar or the subway across the Don Valley.
 
 The landing page has one job: **get the visitor into the city.** Success is the visitor opening it, through Explore, the place search or a sight.
 
@@ -34,12 +34,12 @@ The city is built from the City of Toronto's own open data and OpenStreetMap at 
 ## Capabilities and Constraints
 
 - A static site: `index.html` + `css/landing.css`, built by `npm run build` into fingerprinted `dist/` and served by a Cloudflare Worker. No framework on the landing page.
-- Page analytics: self-hosted Umami, visit counter only, no cookies, no session replay.
+- Analytics: self-hosted Umami page visits plus an aggregate `game_started` event when someone enters play; no direct player identity or session replay.
 - Data licences require attribution wherever the data is shown: City of Toronto Open Data (Open Government Licence – Toronto), © OpenStreetMap contributors (ODbL), AWS Terrain Tiles (SRTM). See `CREDITS.md`.
 
 ## Brand Commitments
 
-- Name: **GTA: The 6**. The landing page, in-game home control, map, and app icons use the GTA: The 6 mark in `assets/brand/gta6-mark.svg`.
+- Name: **Larp Theft Auto: The 6**. The landing page, in-game home control, map, and app icons use the Larp Theft Auto mark in `assets/brand/larp-theft-auto-mark.svg`.
 - **Every image on the page is the app itself.** Pictures of the city are real in-app screenshots, never outside renders, stock photography or generated imagery. The logo (`assets/brand/`, John's own) is a brand mark, not a picture, and is the one exception.
 
 ## Evidence on Hand

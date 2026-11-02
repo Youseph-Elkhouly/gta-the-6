@@ -1332,6 +1332,7 @@ body[data-mode='car'] .gauge-health {
 
 .fullmap-header {
   position: absolute;
+  z-index: 8;
   top: var(--edge);
   left: var(--edge);
   right: var(--edge);
@@ -1386,6 +1387,8 @@ body[data-mode='car'] .gauge-health {
   color: var(--text-3);
   cursor: text;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  isolation: isolate;
+  background: rgba(13, 13, 12, .96);
 }
 
 .fullmap-search-wrap:focus-within {
@@ -1395,6 +1398,8 @@ body[data-mode='car'] .gauge-health {
 }
 
 .fullmap-search {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-width: 0;
   height: 100%;
@@ -1405,7 +1410,12 @@ body[data-mode='car'] .gauge-health {
   font: inherit;
   font-size: 13.5px;
   user-select: text;
+  -webkit-text-fill-color: var(--text);
+  line-height: 1.2;
 }
+
+.fullmap-search-wrap > .icon { position: relative; z-index: 1; }
+.fullmap-search-wrap .ac-list { z-index: 20; }
 
 .fullmap-search::placeholder {
   color: var(--text-3);

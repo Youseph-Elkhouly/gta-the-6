@@ -1,8 +1,8 @@
 {
-  "name": "gta-the-6",
+  "name": "larp-theft-auto",
   "private": true,
   "type": "module",
-  "description": "GTA: The 6 — downtown Toronto in Three.js WebGPU + TSL",
+  "description": "Larp Theft Auto: The 6 — downtown Toronto in Three.js WebGPU + TSL",
   "scripts": {
     "dev": "node tools/prepare-bench.mjs && node tools/dev-server.mjs",
     "build": "node tools/prepare-bench.mjs && npm run build:clouds && node tools/build-site.mjs",

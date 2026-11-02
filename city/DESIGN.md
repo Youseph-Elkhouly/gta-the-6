@@ -1,5 +1,5 @@
 ---
-name: GTA: The 6
+name: Larp Theft Auto: The 6
 description: Downtown Toronto and the waterfront in 3D, set as this week's free city paper.
 colors:
   newsprint: "#e9e6dc"
@@ -130,7 +130,7 @@ components:
     rounded: "{rounded.none}"
 ---
 
-# Design System: GTA: The 6
+# Design System: Larp Theft Auto: The 6
 
 > **Scope:** this system covers the landing page only (`index.html`, `css/landing.css`, `js/landing.js`). It does not describe the 3D explorer's interface (`explore.html`), which has its own visual language.
 
@@ -257,7 +257,7 @@ Printed, blunt and confident: ink blocks with reversed caps, and a hover that in
 - Process Yellow, 15px/900 uppercase ink text, rotated -3deg, top-left of the cover. It states provenance ("Screenshot from the app" / "Footage from the app") and is the page's single yellow.
 
 ### Logo
-- GTA: The 6's original marks (`assets/brand/gta6-mark.svg`, `gta6-logo.svg`, and `gta6-poster.jpg`) provide the game identity across the landing page, map and installable app.
+- Larp Theft Auto: The 6's original marks (`assets/brand/larp-theft-auto-mark.svg`, `larp-theft-auto-logo.svg`, and `larp-theft-auto-poster.jpg`) provide the game identity across the landing page, map and installable app.
 - The tall logo's tower shaft is cut flat at the bottom, so it never floats: it always stands on a heavy rule. As the masthead crest (1024px and wider) its cut end sits exactly on the masthead's bottom rule, the tower rising out of it, a little taller than the name with an empty box of the same width balancing it on the right so the name stays centred. Below 1024px it is dropped (it would push "Outside, at Pearson" onto a second line, and on phones the name already fills the width). On the back page it stands at the right of the slab, reaching down so its cut end lands exactly on the colophon's heavy top rule; on phones it stands centred under the button on that same rule.
 - The square mark is the site icon: favicons (32/16, transparent), the apple-touch and web app icons (180/192/512 on newsprint, the 512 maskable-safe) and the 36px brand button and map logo in the app.
 - Neither drawing is ever recoloured, redrawn or cropped, and their green stays inside the logo.

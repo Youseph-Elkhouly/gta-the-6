@@ -4,29 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="city-build" content="__CITY_BUILD__" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>GTA: THE 6 · Downtown Toronto</title>
-  <link rel="icon" href="./assets/brand/gta6-mark.svg" type="image/svg+xml" />
+  <title>Larp Theft Auto: The 6 · Downtown Toronto</title>
+  <link rel="icon" href="./assets/brand/larp-theft-auto-mark.svg" type="image/svg+xml" />
   <link rel="manifest" href="./assets/manifest.webmanifest" />
   <meta name="theme-color" content="#07111d" />
-  <meta name="description" content="GTA: The 6 — explore downtown Toronto and the waterfront in 3D. Walk, cycle, drive or fly from the Humber Bay Arch Bridge to Sugar Beach, the CN Tower and the Distillery District." />
+  <meta name="description" content="Larp Theft Auto: The 6 — explore downtown Toronto and the waterfront in 3D. Walk, cycle, drive or fly from the Humber Bay Arch Bridge to Sugar Beach, the CN Tower and the Distillery District." />
   <!-- social: link previews -->
   <link rel="canonical" href="./explore.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="GTA: The 6" />
+  <meta property="og:site_name" content="Larp Theft Auto: The 6" />
   <meta property="og:locale" content="en_CA" />
   <meta property="og:url" content="https://sloptoronto.ca/explore" />
-  <meta property="og:title" content="Explore Toronto in 3D · GTA: The 6" />
+  <meta property="og:title" content="Explore Toronto in 3D · Larp Theft Auto: The 6" />
   <meta property="og:description" content="Downtown Toronto and the waterfront in 3D, in your browser: walk, cycle, drive or fly past the CN Tower, along the lake and through the downtown streets." />
   <meta property="og:image" content="https://sloptoronto.ca/assets/og-toronto.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="GTA: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
+  <meta property="og:image:alt" content="Larp Theft Auto: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Explore Toronto in 3D · GTA: The 6" />
+  <meta name="twitter:title" content="Explore Toronto in 3D · Larp Theft Auto: The 6" />
   <meta name="twitter:description" content="Downtown Toronto and the waterfront in 3D, in your browser: walk, cycle, drive or fly past the CN Tower, along the lake and through the downtown streets." />
   <meta name="twitter:image" content="https://sloptoronto.ca/assets/og-toronto.jpg" />
-  <meta name="twitter:image:alt" content="GTA: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
+  <meta name="twitter:image:alt" content="Larp Theft Auto: The 6 — Toronto's skyline and the CN Tower over Lake Ontario" />
   <!-- /social -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <script>
@@ -63,6 +63,8 @@
         './js/actor-models.js',
         './js/vehicle-lights.js',
         './js/pedestrians.js',
+        './js/cast-recipes.js',
+        './js/cast.js',
         './js/live-sky.js',
         './js/seasons.js',
         './js/lighting.js',
@@ -247,11 +249,11 @@
     </defs>
   </svg>
 
-  <!-- Entry screen. Cover art: assets/brand/gta6-poster.jpg. The progress ids stay so the city can fill the bar. -->
+  <!-- Entry screen. Cover art: assets/brand/larp-theft-auto-poster.jpg. The progress ids stay so the city can fill the bar. -->
   <div id="loading-overlay" role="status" aria-live="polite">
     <div class="gta-splash">
-      <img id="gta-poster" class="gta-poster" alt="" src="./assets/brand/gta6-poster.jpg" />
-      <img id="gta-logo-fallback" class="gta-logo" alt="GTA: The 6" src="./assets/brand/gta6-logo.svg" hidden />
+      <img id="gta-poster" class="gta-poster" alt="" src="./assets/brand/larp-theft-auto-poster.jpg" />
+      <img id="gta-logo-fallback" class="gta-logo" alt="Larp Theft Auto: The 6" src="./assets/brand/larp-theft-auto-logo.svg" hidden />
       <div class="gta-splash-shade"></div>
       <div class="gta-splash-grain" aria-hidden="true"></div>
       <div class="loader gta-splash-copy">
@@ -263,7 +265,7 @@
   </div>
 
   <!-- 3D WebGPU Viewport Container -->
-  <main id="canvas-container" aria-label="GTA: THE 6 downtown Toronto"></main>
+  <main id="canvas-container" aria-label="Larp Theft Auto: The 6 downtown Toronto"></main>
   <div id="gta-grain" aria-hidden="true"></div>
 
   <!-- Top-Left: Search, place card & directions (tour-guide.js) -->
@@ -287,7 +289,7 @@
       </div>
     </section>
     <div id="search-box" class="panel search-box" role="search">
-      <a class="brand-home" href="./index.html" title="GTA: THE 6" aria-label="GTA: THE 6 home"><img src="./assets/brand/gta6-mark.svg" alt="" width="36" height="36" /></a>
+      <a class="brand-home" href="./index.html" title="Larp Theft Auto: The 6" aria-label="Larp Theft Auto: The 6 home"><img src="./assets/brand/larp-theft-auto-mark.svg" alt="" width="36" height="36" /></a>
       <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"/></svg>
       <input id="place-search" class="search-input" type="text" placeholder="Search Toronto" aria-label="Search places, streets and districts in Toronto" autocomplete="off" spellcheck="false" />
       <kbd class="search-kbd" aria-hidden="true">/</kbd>
@@ -557,9 +559,9 @@
 
     <div class="fullmap-header">
       <div class="panel fullmap-title">
-        <img class="map-logo" src="./assets/brand/gta6-mark.svg" alt="" width="36" height="36" />
+        <img class="map-logo" src="./assets/brand/larp-theft-auto-mark.svg" alt="" width="36" height="36" />
         <div>
-          <h2>GTA: The 6 <span>Map</span></h2>
+          <h2>Larp Theft Auto: The 6 <span>Map</span></h2>
           <p id="fullmap-player-info" class="fullmap-subtitle">You are by Union Station</p>
         </div>
       </div>
@@ -680,7 +682,7 @@
         </section>
         <section class="help-sec help-keys">
           <h3><svg class="icon icon-sm" aria-hidden="true"><use href="#i-camera"/></svg>Look &amp; view</h3>
-          <ul><li>Drag to orbit · scroll to zoom</li><li><kbd>V</kbd> Next camera · <kbd>5</kbd>–<kbd>0</kbd> Cameras &amp; sights</li><li><kbd>H</kbd> Clean view · <kbd>?</kbd> This help</li><li><kbd>N</kbd> Sound on / off</li></ul>
+          <ul><li>Mouse: click the city to capture, then move to turn and look · hold right mouse to aim/zoom · <kbd>Esc</kbd> releases</li><li><kbd>1</kbd> Equip pistol · left-click to fire · <kbd>R</kbd> reload · scroll to zoom · <kbd>V</kbd> Next camera</li><li><kbd>5</kbd>–<kbd>0</kbd> Cameras &amp; sights · <kbd>H</kbd> Clean view · <kbd>?</kbd> This help</li><li><kbd>N</kbd> Sound on / off</li></ul>
         </section>
       </div>
       <p class="help-foot">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> (ODbL) and City of Toronto Open Data (Open Government Licence – Toronto). Built on <a href="https://github.com/mrdoob/slop-newyork" target="_blank" rel="noopener noreferrer">Slop New York</a> by mrdoob and Abuja Tour (MIT). <a href="./index.html#credits">All credits</a>. Storefront signs show each shop's name, not its trademarked logo. <span class="help-fps">three.js WebGPU · <span id="hud-fps" class="fps-ok">60</span> fps</span></p>
@@ -699,6 +701,7 @@
     import { SunLightNode } from 'three/addons/lights/SunLightNode.js';
     import { ClusteredLighting } from 'three/addons/lighting/ClusteredLighting.js';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
     import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
     import * as StylizedWater from './js/stylized-water.js';
 
@@ -715,6 +718,7 @@
         SunLightNode,
         ClusteredLighting,
         GLTFLoader,
+        cloneSkinned,
         MeshoptDecoder
       }
     };
@@ -774,6 +778,7 @@
     if (enterBtn) enterBtn.addEventListener('click', () => {
       if (enterBtn.disabled) return;
       document.getElementById('loading-overlay').classList.add('hidden');
+      window.umami?.track?.('game_started');
     });
     const poster = document.getElementById('gta-poster');
     if (poster) poster.addEventListener('error', () => {

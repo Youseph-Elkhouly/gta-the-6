@@ -31,12 +31,14 @@
   let noiseBuf = null;
 
   const dir = new THREE.Vector3();
-  const origin = new THREE.Vector3();
   const aimPoint = new THREE.Vector3();
+  const screenTarget = new THREE.Vector3();
   const shoulder = new THREE.Vector3();
   const elbow = new THREE.Vector3();
   const wrist = new THREE.Vector3();
+  const gunWrist = new THREE.Vector3();
   const hand = new THREE.Vector3();
+  const supportTarget = new THREE.Vector3();
   const pole = new THREE.Vector3();
   const axis = new THREE.Vector3();
   const front = new THREE.Vector3();
@@ -50,7 +52,6 @@
   const gunUp = new THREE.Vector3();
   const basis = new THREE.Matrix4();
   const camDir = new THREE.Vector3();
-  const ndc = new THREE.Vector3();
 
   function emit(type, detail) {
     window.CITY.events?.emit(type, detail);
@@ -212,8 +213,7 @@
     if (state.reloadLeft > 0) hud.textContent = `PISTOL  ${state.ammo} / ${inf}`;
     else if (state.ammo <= 0) hud.textContent = `PISTOL  0 / ${inf} — PRESS R TO RELOAD`;
     else hud.textContent = `PISTOL  ${state.ammo} / ${inf}`;
-    const aim = state.equipped && onFoot() && followCam() && !window.CITY.cameoTalk && !window.CITY.uiOverlay;
-    cross.hidden = !aim;
+    cross.hidden = !(state.equipped && onFoot());
   }
 
   function setEquipped(on, silent) {
@@ -357,7 +357,7 @@
         for (let e = 0; e < edges.length; e++) {
           const edge = edges[e];
           const hitT = raySegment(ox, oz, dx, dz, edge.a.x, edge.a.z, edge.b.x, edge.b.z);
-          if (hitT === null || hitT < 0.35 || hitT > maxT) continue;
+          if (hitT === null || hitT < 0.12 || hitT > maxT) continue;
           const y = oy + dy * hitT;
           if (y < minY - 0.05 || y > maxY + 0.05) continue;
           if (!best || hitT < best.t) best = { t: hitT, nx: edge.nx, nz: edge.nz };
@@ -382,69 +382,70 @@
     return { ax: x, ay: feet + 0.15, az: z, bx: x, by: head, bz: z, r: radius * s };
   }
 
-  // Aim from the chest along the body's heading, pitched with the camera.
-  // The crosshair is this ray, so it stays on the person instead of the screen centre.
+  // Aim from the chest through the centre of the camera.  The old implementation
+  // used the body's heading here, which meant the reticle and the shot diverged
+  // as soon as the player dragged the chase camera around.
   function aimBasis() {
     const person = cm.entities.person;
-    const heading = person.heading || 0;
     cameras.camera.getWorldDirection(camDir);
-    const pitch = Math.asin(Math.max(-0.72, Math.min(0.55, camDir.y)));
-    const cp = Math.cos(pitch);
-    const dx = Math.sin(heading) * cp;
-    const dy = Math.sin(pitch);
-    const dz = Math.cos(heading) * cp;
+    camDir.normalize();
+    cameras.camera.getWorldPosition(screenTarget);
+    screenTarget.addScaledVector(camDir, RANGE);
+    const ox = person.position.x;
+    const oy = person.position.y + 1.42;
+    const oz = person.position.z;
+    camDir.set(screenTarget.x - ox, screenTarget.y - oy, screenTarget.z - oz).normalize();
     return {
-      ox: person.position.x + dx * 0.55,
-      oy: person.position.y + 1.42,
-      oz: person.position.z + dz * 0.55,
-      dx, dy, dz
+      ox, oy, oz,
+      dx: camDir.x,
+      dy: camDir.y,
+      dz: camDir.z,
+      target: screenTarget
     };
   }
 
   function placeCrosshair() {
-    if (!cross || cross.hidden || !cameras?.camera || !cm?.entities?.person) return;
-    const a = aimBasis();
-    const cam = cameras.camera;
-    origin.set(a.ox + a.dx * 0.35, a.oy + a.dy * 0.35, a.oz + a.dz * 0.35);
-    cam.getWorldDirection(camDir);
-    const vx = origin.x - cam.position.x;
-    const vy = origin.y - cam.position.y;
-    const vz = origin.z - cam.position.z;
-    if (vx * camDir.x + vy * camDir.y + vz * camDir.z < 0.4) {
-      cross.style.visibility = 'hidden';
-      return;
-    }
-    ndc.copy(origin).project(cam);
-    const rect = canvas.getBoundingClientRect();
+    if (!cross || !cameras?.camera || !cm?.entities?.person) return;
+    cross.hidden = !(state.equipped && onFoot());
+    if (cross.hidden) return;
+    // The ray is deliberately camera-centred, so the reticle must stay centred
+    // too.  Projecting the shoulder/chest point made it slide across the screen
+    // whenever the camera was dragged.
     cross.style.visibility = 'visible';
-    cross.style.left = `${rect.left + (ndc.x * 0.5 + 0.5) * rect.width}px`;
-    cross.style.top = `${rect.top + (-ndc.y * 0.5 + 0.5) * rect.height}px`;
+    cross.style.display = 'block';
+    cross.style.zIndex = '50';
+    cross.style.left = `${window.innerWidth * 0.5}px`;
+    cross.style.top = `${window.innerHeight * 0.5}px`;
   }
 
   function shoot() {
     const aim = aimBasis();
-    const ox = aim.ox;
-    const oy = aim.oy;
-    const oz = aim.oz;
-    const dx = aim.dx;
-    const dy = aim.dy;
-    const dz = aim.dz;
-    let bestT = RANGE;
+    // The shot is the camera ray through the reticle, started just in front of
+    // the chest. A muzzle tucked behind the coat used to aim the ray at the
+    // player's own neck and the bullet never left the body.
+    const ox = aim.ox + aim.dx * 0.55;
+    const oy = aim.oy + aim.dy * 0.55;
+    const oz = aim.oz + aim.dz * 0.55;
+    const rayX = aim.dx;
+    const rayY = aim.dy;
+    const rayZ = aim.dz;
+    const shotRange = RANGE;
+    let bestT = shotRange;
     let kind = 'miss';
     let targetId = null;
     let targetCategory = null;
     let damage = 0;
     let normal = null;
 
-    const wall = colliderHit(ox, oy, oz, dx, dy, dz, RANGE);
+    const wall = colliderHit(ox, oy, oz, rayX, rayY, rayZ, shotRange);
     if (wall) {
       bestT = wall.t;
       kind = 'world';
       normal = wall;
     }
-    if (dy < -0.04) {
+    if (rayY < -0.04) {
       const groundY = (cm.entities.person.position.y || 0) + 0.04;
-      const gt = (groundY - oy) / dy;
+      const gt = (groundY - oy) / rayY;
       if (gt > 0.4 && gt < bestT) {
         bestT = gt;
         kind = 'world';
@@ -456,11 +457,11 @@
     for (let i = 0; i < peds.length; i++) {
       const p = peds[i];
       if (!p.placed || p.dead) continue;
-      const rough = (p.x - ox) * dx + (p.z - oz) * dz;
+      const rough = (p.x - ox) * rayX + (p.z - oz) * rayZ;
       if (rough < 0 || rough > bestT + 1) continue;
       if ((p.x - ox) ** 2 + (p.z - oz) ** 2 > (bestT + 2) ** 2) continue;
       const cap = capsuleOf(p.x, p.z, p.rig, 0.36);
-      const t = rayCapsule(ox, oy, oz, dx, dy, dz, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
+      const t = rayCapsule(ox, oy, oz, rayX, rayY, rayZ, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
       if (t < bestT) {
         bestT = t;
         kind = 'ambient';
@@ -475,10 +476,10 @@
     for (let i = 0; i < cops.length; i++) {
       const c = cops[i];
       if (!c.alive) continue;
-      const rough = (c.x - ox) * dx + (c.z - oz) * dz;
+      const rough = (c.x - ox) * rayX + (c.z - oz) * rayZ;
       if (rough < 0 || rough > bestT + 1) continue;
       const cap = capsuleOf(c.x, c.z, c.rig, 0.38);
-      const t = rayCapsule(ox, oy, oz, dx, dy, dz, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
+      const t = rayCapsule(ox, oy, oz, rayX, rayY, rayZ, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
       if (t < bestT) {
         bestT = t;
         kind = 'police';
@@ -491,10 +492,10 @@
     const cast = window.CITY.CHARACTERS || [];
     for (const c of cast) {
       if (!c.npc || !c.rig) continue;
-      const rough = (c.npc.x - ox) * dx + (c.npc.z - oz) * dz;
+      const rough = (c.npc.x - ox) * rayX + (c.npc.z - oz) * rayZ;
       if (rough < 0 || rough > bestT + 1) continue;
       const cap = capsuleOf(c.npc.x, c.npc.z, c.rig, 0.4);
-      const t = rayCapsule(ox, oy, oz, dx, dy, dz, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
+      const t = rayCapsule(ox, oy, oz, rayX, rayY, rayZ, cap.ax, cap.ay, cap.az, cap.bx, cap.by, cap.bz, cap.r);
       if (t < bestT) {
         bestT = t;
         kind = 'protected';
@@ -504,15 +505,15 @@
       }
     }
 
-    const x = ox + dx * bestT;
-    const y = oy + dy * bestT;
-    const z = oz + dz * bestT;
+    const x = ox + rayX * bestT;
+    const y = oy + rayY * bestT;
+    const z = oz + rayZ * bestT;
     if (kind !== 'miss') spark(x, y, z, normal);
     tracer(x, y, z);
 
     if (kind === 'ambient') {
       const ped = peds.find((p) => p.id === targetId);
-      const result = ped && traffic.hurtPedestrian ? traffic.hurtPedestrian(ped, DAMAGE, { x: dx, z: dz }) : null;
+      const result = ped && traffic.hurtPedestrian ? traffic.hurtPedestrian(ped, DAMAGE, { x: rayX, z: rayZ }) : null;
       const base = {
         actor: 'player',
         targetId,
@@ -525,7 +526,7 @@
       if (result === 'killed') emit('npc:killed', base);
       else if (result === 'damaged') emit('npc:damaged', { ...base, health: ped.health });
     } else if (kind === 'police') {
-      const result = window.CITY.wanted?.damageOfficer(targetId, DAMAGE, { x: dx, z: dz });
+      const result = window.CITY.wanted?.damageOfficer(targetId, DAMAGE, { x: rayX, z: rayZ });
       const base = {
         actor: 'player',
         targetId,
@@ -558,8 +559,13 @@
   }
 
   function tracer(x, y, z) {
-    pistol.updateWorldMatrix(true, false);
+    const aim = aimBasis();
+    pistol.updateWorldMatrix(true, true);
     muzzle.copy(pistol.userData.muzzleLocal).applyMatrix4(pistol.matrixWorld);
+    const ahead = (muzzle.x - aim.ox) * aim.dx + (muzzle.y - aim.oy) * aim.dy + (muzzle.z - aim.oz) * aim.dz;
+    if (!(pistol.visible && ahead > 0.15)) {
+      muzzle.set(aim.ox + aim.dx * 0.55, aim.oy + aim.dy * 0.55, aim.oz + aim.dz * 0.55);
+    }
     const t = tracers[state.tracerCursor = (state.tracerCursor + 1) % tracers.length];
     const len = Math.max(0.05, muzzle.distanceTo(aimPoint.set(x, y, z)));
     t.position.copy(muzzle).add(aimPoint).multiplyScalar(0.5);
@@ -569,28 +575,34 @@
     t.userData.life = 0.04;
   }
 
-  function poseArm(aim, reloadBlend, recoil) {
+  function poseArm(aim, reloadBlend, recoil, leftArm = false, target = null) {
     const rig = cm.entities.person.rig;
     const bones = BONE();
     if (!rig || !bones || !rig.placed) return null;
-    rig.jointAt(bones.UPPER_ARM_R, shoulder);
+    const upperBone = leftArm ? bones.UPPER_ARM_L : bones.UPPER_ARM_R;
+    const foreBone = leftArm ? bones.FOREARM_L : bones.FOREARM_R;
+    rig.jointAt(upperBone, shoulder);
     const yaw = Math.atan2(aim.x, aim.z);
     right.set(Math.cos(yaw), 0, -Math.sin(yaw));
     const s = rig.s;
-    let reach = 0.5 * s;
+    // Keep a visible elbow bend instead of locking the arm straight at full reach.
+    let reach = 0.43 * s;
     let drop = 0.02 * s;
     if (reloadBlend > 0) {
-      reach = (0.5 - 0.26 * reloadBlend) * s;
+      reach = (0.43 - 0.19 * reloadBlend) * s;
       drop = 0.2 * reloadBlend * s;
     }
     const flat = camDir.copy(aim);
     flat.y = 0;
     if (flat.lengthSq() < 1e-4) flat.set(Math.sin(rig.yaw), 0, Math.cos(rig.yaw));
     flat.normalize();
-    hand.copy(shoulder).addScaledVector(flat, reach).addScaledVector(aim, 0.08 * s * (1 - reloadBlend));
-    hand.addScaledVector(right, 0.07 * s);
-    hand.y -= drop + recoil * 0.05;
-    hand.addScaledVector(flat, -recoil * 0.07);
+    if (target) hand.copy(target);
+    else {
+      hand.copy(shoulder).addScaledVector(flat, reach).addScaledVector(aim, 0.08 * s * (1 - reloadBlend));
+      hand.addScaledVector(right, 0.07 * s);
+      hand.y -= drop + recoil * 0.05;
+      hand.addScaledVector(flat, -recoil * 0.07);
+    }
 
     const l1 = 0.3 * s;
     const l2 = 0.255 * s;
@@ -598,7 +610,7 @@
     let dist = axis.length();
     axis.multiplyScalar(1 / (dist || 1));
     dist = Math.max(Math.abs(l1 - l2) + 0.01, Math.min((l1 + l2) * 0.992, dist));
-    pole.copy(right).multiplyScalar(0.9).addScaledVector(up, -0.35);
+    pole.copy(right).multiplyScalar(leftArm ? -0.9 : 0.9).addScaledVector(up, -0.35);
     pole.addScaledVector(axis, -pole.dot(axis));
     if (pole.lengthSq() < 1e-6) pole.copy(right);
     pole.normalize();
@@ -608,10 +620,25 @@
     wrist.copy(shoulder).addScaledVector(axis, dist);
     front.copy(flat);
     rig.basis(axis.copy(shoulder).sub(elbow), front, q1);
-    rig.writeBone(bones.UPPER_ARM_R, q1, shoulder);
+    rig.writeBone(upperBone, q1, shoulder);
     rig.basis(axis.copy(elbow).sub(wrist), front, q2);
-    rig.writeBone(bones.FOREARM_R, q2, elbow);
+    rig.writeBone(foreBone, q2, elbow);
     return wrist;
+  }
+
+  const gripOffset = new THREE.Vector3(0.02, 0.072, 0.028);
+  // Barrel (+Z) along the hand's finger axis (+Y), grip hanging toward the palm.
+  const gripQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, Math.PI));
+
+  function holdGun(hand) {
+    if (pistol.parent !== hand) hand.attach(pistol);
+    pistol.position.copy(gripOffset);
+    pistol.quaternion.copy(gripQuat);
+    pistol.visible = true;
+  }
+
+  function releaseGun() {
+    if (pistol.parent !== scene) scene.attach(pistol);
   }
 
   function placeGun(at, aim) {
@@ -688,9 +715,13 @@
 
   function onPointerDown(e) {
     if (e.button !== 0 || state.trigger) return;
-    if (e.target !== canvas) return;
-    state.trigger = true;
     if (blocked(e)) return;
+    // HUD layers can sit above the WebGL canvas and become the event target.
+    // Accept clicks anywhere inside the game canvas, but never through an open UI.
+    const rect = canvas?.getBoundingClientRect();
+    const locked = document.pointerLockElement === canvas;
+    if (!locked && (!rect || e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom)) return;
+    state.trigger = true;
     tryFire();
   }
 
@@ -731,8 +762,10 @@
     state.tracerCursor = 0;
     makeHud();
     window.addEventListener('keydown', onKey, true);
-    canvas.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerdown', onPointerDown, true);
     window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('lostpointercapture', onPointerUp);
     window.addEventListener('blur', () => { state.trigger = false; });
   }
 
@@ -754,12 +787,20 @@
       state.remembered = false;
       setEquipped(true);
     }
-    const aiming = state.equipped && followCam() && !window.CITY.cameoTalk && !window.CITY.uiOverlay;
+    const aiming = state.equipped && followCam() && cameras.aimZoom && !window.CITY.cameoTalk && !window.CITY.uiOverlay;
     person.combatAim = aiming;
-    person.aimShoulder = aiming && cameras.activePresetId === 'chase' ? 0.62 : 0;
+    // Armed hip-fire sits the camera on the right shoulder so the reticle is on
+    // the street, not on the back of the head. Aiming pulls it in a little more.
+    person.aimShoulder = !state.equipped || cameras.activePresetId !== 'chase' ? 0 : (aiming ? 0.62 : 0.5);
     if (aiming && (cameras.activePresetId === 'chase' || cameras.activePresetId === 'action' || cameras.activePresetId === 'pov')) {
-      person.heading = Math.atan2(Math.sin(person.heading + cameras.orbitYawOffset), Math.cos(person.heading + cameras.orbitYawOffset));
-      cameras.orbitYawOffset = 0;
+      // The camera yaw is relative to the player's yaw. Steering toward the
+      // camera's world direction while retaining a non-zero orbit offset creates
+      // a feedback loop: every turn moves the target by that same offset, so the
+      // player spins indefinitely. Consume any existing orbit offset once.
+      if (Number.isFinite(cameras.orbitYawOffset) && Math.abs(cameras.orbitYawOffset) > 1e-6) {
+        person.heading += cameras.orbitYawOffset;
+        cameras.orbitYawOffset = 0;
+      }
       person.aimHeading = person.heading;
     }
   }
@@ -782,7 +823,9 @@
     }
     state.recoil = Math.max(0, state.recoil - dt * 7.5);
     const show = state.equipped && onFoot();
+    const actor = cm.entities.person.castActor;
     if (!show) {
+      if (pistol.parent !== scene) releaseGun();
       pistol.visible = false;
       flash.visible = false;
       hudText();
@@ -790,14 +833,30 @@
       return;
     }
     const aiming = cm.entities.person.combatAim && followCam();
-    if (aiming) {
-      const aim = aimBasis();
-      dir.set(aim.dx, aim.dy, aim.dz);
-      const reloadBlend = state.reloadLeft > 0 ? Math.sin(Math.min(1, (RELOAD - state.reloadLeft) / RELOAD) * Math.PI) : 0;
+    const aim = aimBasis();
+    dir.set(aim.dx, aim.dy, aim.dz);
+    const reloadBlend = state.reloadLeft > 0 ? Math.sin(Math.min(1, (RELOAD - state.reloadLeft) / RELOAD) * Math.PI) : 0;
+    if (actor?.ready && actor.bones?.rightHand) {
+      // The idle clip leaves the pistol arm hanging behind the coat. Hold it
+      // in front the whole time the gun is out, not only while aiming.
+      actor.poseWeapon({ aiming, aimDir: dir, reload: reloadBlend, recoil: state.recoil });
+      holdGun(actor.bones.rightHand);
+    } else if (aiming) {
+      releaseGun();
       const at = poseArm(dir, reloadBlend, state.recoil);
-      if (at) placeGun(at, dir);
-      else pistol.visible = false;
-    } else hangGun();
+      if (at) {
+        gunWrist.copy(at);
+        placeGun(gunWrist, dir);
+        camDir.copy(dir);
+        camDir.y = 0;
+        if (camDir.lengthSq() > 1e-6) camDir.normalize();
+        supportTarget.copy(pistol.position).addScaledVector(right, 0.09).addScaledVector(camDir, -0.055).addScaledVector(up, -0.025);
+        poseArm(dir, reloadBlend, 0, true, supportTarget);
+      } else pistol.visible = false;
+    } else {
+      releaseGun();
+      hangGun();
+    }
     hudText();
     placeCrosshair();
     stepEffects(dt);

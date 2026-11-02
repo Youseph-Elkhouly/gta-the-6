@@ -36,6 +36,28 @@ function landmarkView(teleportKey, siteId, eye, lookY, elapsed, out) {
   return true;
 }
 
+// Pull a chase camera back to the last clear sample when a turn would leave it inside a building.
+let buildingTest = null;
+function pullCameraFromBuildings(cam, x, y, z) {
+  if (!buildingTest) {
+    if (!window.CITY.buildingIndex || !window.CITY.GEO) return;
+    buildingTest = window.CITY.buildingIndex(window.CITY.GEO);
+  }
+  if (!buildingTest(cam.x, cam.z, y)) return;
+  const dx = cam.x - x;
+  const dz = cam.z - z;
+  const dist = Math.hypot(dx, dz) || 1;
+  for (let t = dist - 0.35; t > 0.7; t -= 0.28) {
+    const px = x + dx * (t / dist);
+    const pz = z + dz * (t / dist);
+    if (!buildingTest(px, pz, y)) {
+      cam.x = px;
+      cam.z = pz;
+      return;
+    }
+  }
+}
+
 class CameraSystem {
   constructor(domElement, controllerManager) {
     this.domElement = domElement;
@@ -52,6 +74,7 @@ class CameraSystem {
     this.orbitYawOffset = 0.0;
     this.orbitPitchOffset = 0.09;
     this.zoomMultiplier = 1.0;
+    this.aimZoom = false;
     this.isDragging = false;
     this.userOrbitTimer = 0;
 
@@ -79,11 +102,42 @@ class CameraSystem {
     const canvas = this.domElement;
     const pointers = new Map();
     canvas.style.touchAction = 'none';
+    // The WebGL canvas fills the play area. Suppress the browser's image/canvas
+    // context menu here so right-button aiming can hold the zoom cleanly.
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const insideCanvas = document.pointerLockElement === canvas ||
+        (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
+      if (e.pointerType === 'mouse' && e.button === 2 && insideCanvas && !window.CITY.uiOverlay) {
+        e.preventDefault();
+        this.aimZoom = true;
+      }
+    }, true);
+    const stopAimZoom = (e) => {
+      if (!e || e.button === 2 || e.type === 'blur' || e.type === 'pointercancel') this.aimZoom = false;
+    };
+    window.addEventListener('pointerup', stopAimZoom);
+    window.addEventListener('pointercancel', stopAimZoom);
+    window.addEventListener('blur', stopAimZoom);
 
     canvas.addEventListener('pointerdown', (e) => {
       if (window.CITY.uiOverlay) return;
+      if (e.pointerType === 'mouse') {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        // Mouse look is captured on click. Desktop mouse dragging is deliberately
+        // not used; touch keeps its drag and pinch gestures below.
+        if (canvas.requestPointerLock) {
+          try {
+            const lock = canvas.requestPointerLock();
+            lock?.catch?.(() => {});
+          } catch (_) {}
+        }
+        return;
+      }
       if (e.button !== 0 || pointers.size >= 2) return;
-      // Only two touch pointers may share a gesture; mouse and pen drags stay independent.
+      // Only touch pointers share drag/pinch gestures.
       if (pointers.size && (e.pointerType !== 'touch' || pointers.values().next().value.type !== 'touch')) return;
       e.preventDefault();
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
@@ -112,6 +166,24 @@ class CameraSystem {
         this.orbitYawOffset -= dx * 0.0065;
         this.orbitPitchOffset = Math.max(-0.32, Math.min(0.68, this.orbitPitchOffset + dy * 0.005));
       }
+      this.userOrbitTimer = 4.0;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (document.pointerLockElement !== canvas || window.CITY.uiOverlay) return;
+      const followLook = ['chase', 'action', 'pov'].includes(this.activePresetId);
+      const person = this.controllerManager.activeMode === 'person' && followLook
+        ? this.controllerManager.entities?.person : null;
+      if (person && !window.CITY.wanted?.isDown) {
+        // On foot, mouse yaw turns the character so the chase camera remains
+        // behind them. This avoids orbiting through the model on quick turns and
+        // keeps walking and pistol aim on the same heading.
+        person.heading -= e.movementX * 0.0028;
+        this.orbitYawOffset = 0;
+      } else {
+        this.orbitYawOffset -= e.movementX * 0.0028;
+      }
+      this.orbitPitchOffset = Math.max(-0.32, Math.min(0.68, this.orbitPitchOffset + e.movementY * 0.0025));
       this.userOrbitTimer = 4.0;
     });
 
@@ -212,11 +284,12 @@ class CameraSystem {
     const desiredPos = this._desiredPos;
     const desiredLook = this._desiredLook;
 
-    if (this.userOrbitTimer > 0 && !this.isDragging) {
+    const pointerLocked = document.pointerLockElement === this.domElement;
+    if (this.userOrbitTimer > 0 && !this.isDragging && !pointerLocked) {
       this.userOrbitTimer = Math.max(0, this.userOrbitTimer - dt);
     }
 
-    if (!this.isDragging && this.userOrbitTimer <= 0 && Math.abs(entity.speed) > 0.5) {
+    if (!this.isDragging && !pointerLocked && this.userOrbitTimer <= 0 && Math.abs(entity.speed) > 0.5) {
       this.orbitYawOffset -= Math.round(this.orbitYawOffset / (Math.PI * 2)) * (Math.PI * 2);
       this.orbitYawOffset += (0.0 - this.orbitYawOffset) * (1 - Math.exp(-dt * 2.2));
     }
@@ -230,10 +303,17 @@ class CameraSystem {
 
     switch (this.activePresetId) {
       case 'chase': {
+        const onFoot = entity.type === 'person';
         const aim = entity.aimShoulder || 0;
-        const dist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.82 : 1) * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
-        const height = entity.chaseHeight * this.zoomMultiplier + Math.sin(this.orbitPitchOffset) * dist * 0.85;
-        const horizDist = Math.cos(this.orbitPitchOffset) * dist + speedLag;
+        const aiming = onFoot && !!entity.combatAim;
+        const aimZoom = onFoot && this.aimZoom ? 0.7 : 1;
+        const followDist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.84 : 1) * aimZoom * (1 + Math.min(0.18, this.smoothedSpeed * 0.008));
+        const dist = onFoot ? Math.max(aiming ? 2.35 : 3.25, followDist) : followDist;
+        const pitch = this.orbitPitchOffset;
+        const height = onFoot
+          ? 1.58 + Math.sin(pitch) * dist * 0.38
+          : entity.chaseHeight * this.zoomMultiplier + Math.sin(pitch) * dist * 0.85;
+        const horizDist = Math.cos(onFoot ? pitch * 0.85 : pitch) * dist + (onFoot ? speedLag * 0.35 : speedLag);
 
         desiredPos.set(
           entity.position.x - Math.sin(totalYaw) * horizDist,
@@ -251,11 +331,18 @@ class CameraSystem {
           desiredPos.z -= Math.sin(totalYaw) * aim;
         }
 
-        const lookUpBias = entity.type === 'helicopter' ? 0.2 : (entity.type === 'car' ? 0.52 : 1.55);
+        const shoulder = onFoot ? (entity.aimShoulder || 0) : 0;
+        const lookAhead = onFoot ? (aiming ? 18 : (shoulder ? 14 : 6)) : 5.2;
+        const lookUpBias = entity.type === 'helicopter' ? 0.2 : (entity.type === 'car' ? 0.52 : 0);
+        const lookY = onFoot
+          ? entity.position.y + 1.38 + Math.sin(-pitch) * (shoulder ? 6.5 : 2.4)
+          : entity.position.y + entity.cameraTargetOffset.y + lookUpBias;
+        // Same side offset as the camera, so the view runs beside the body
+        // instead of through the back of the head.
         desiredLook.set(
-          entity.position.x + Math.sin(entity.heading) * 5.2 + (aim ? Math.cos(entity.heading) * aim * 0.35 : 0),
-          entity.position.y + entity.cameraTargetOffset.y + lookUpBias,
-          entity.position.z + Math.cos(entity.heading) * 5.2 - (aim ? Math.sin(entity.heading) * aim * 0.35 : 0)
+          entity.position.x + Math.sin(entity.heading) * lookAhead + Math.cos(entity.heading) * shoulder,
+          lookY,
+          entity.position.z + Math.cos(entity.heading) * lookAhead - Math.sin(entity.heading) * shoulder
         );
         break;
       }
@@ -396,13 +483,16 @@ class CameraSystem {
         this.followOffset.subVectors(this.currentPos, entity.position);
         this.followLookOffset.subVectors(this.currentLookAt, entity.position);
       }
-      const k = 1 - Math.exp(-dt * 8.5);
+      // Ease in the character's own frame. A hard snap makes mouse-look feel
+      // rigid, and a world-space follow cuts through the body on a sharp turn.
+      const k = entity.type === 'person' ? 1 - Math.exp(-dt * 16) : 1 - Math.exp(-dt * 8.5);
       this.followBaseY += (entity.position.y - this.followBaseY) * k;
       this.followOffset.lerp(desiredPos.sub(entity.position), k);
       this.followLookOffset.lerp(desiredLook.sub(entity.position), k);
       this.currentPos.set(entity.position.x, this.followBaseY, entity.position.z).add(this.followOffset);
       this.currentLookAt.set(entity.position.x, this.followBaseY, entity.position.z).add(this.followLookOffset);
       this.currentPos.y = Math.max(0.55, this.currentPos.y);
+      if (entity.type === 'person') pullCameraFromBuildings(this.currentPos, entity.position.x, entity.position.y + 1.5, entity.position.z);
     } else {
       this.followEntity = null;
       const k = 1 - Math.exp(-dt * 8.5);

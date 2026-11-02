@@ -1,6 +1,6 @@
 # Credits
 
-GTA: The 6 is downtown Toronto and the waterfront in 3D, in the browser. The project's own code is under the MIT
+Larp Theft Auto: The 6 is downtown Toronto and the waterfront in 3D, in the browser. The project's own code is under the MIT
 License (`LICENSE`). Third-party code, data and assets keep their own licences, listed here.
 
 ## Engine and code
@@ -49,8 +49,8 @@ License (`LICENSE`). Third-party code, data and assets keep their own licences, 
   LICENSE. Built on **@takram/three-atmosphere 0.19.1+fork.7** and **@takram/three-geospatial 0.9.1+fork.7** (MIT, © takram; compatibility fixes by John Fewell).
 - **EZ-Tree** by Dan Greenheck: procedural trees. MIT. https://github.com/dgreenheck/ez-tree
 - **lil-gui** (loaded only for the `?waterTune` tuning panel). MIT.
-- **Umami** (https://umami.is), self-hosted at umami.cloud6711.workers.dev: privacy-friendly page analytics, counted
-  only on sloptoronto.ca; no cookies. MIT.
+- **Umami** (https://umami.is), self-hosted at umami.cloud6711.workers.dev: privacy-friendly page visits and aggregate
+  game-start events, counted only on sloptoronto.ca; no direct player identity or session replay. MIT.
 - **aalghooneh/slop-toronto** by aalghooneh, another Toronto fork of Slop New York. MIT.
   https://github.com/aalghooneh/slop-toronto. Ported from it, adapted to this city's scripts and data:
   - the TTC streetcars (`js/streetcars.js`: track chaining & direction of travel, stops, signals, queuing, the Flexity
@@ -192,7 +192,7 @@ License (`LICENSE`). Third-party code, data and assets keep their own licences, 
 
 ## Not affiliated
 
-GTA: The 6 is a fan project. It is not affiliated with or endorsed by the City of Toronto, the landmarks shown or
+Larp Theft Auto: The 6 is a parody project. It is not affiliated with or endorsed by the City of Toronto, the landmarks shown or
 their owners. Storefront signs show shops' names, not their trademarked logos. The screenshots on the landing page are
 from the app itself.
 # City Open Data additions

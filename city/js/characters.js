@@ -24,21 +24,13 @@
 
   // lat/lon are the public landmark. fallback is a teleport spot already in this city, used only if the landmark has no street.
   const ROSTER = [
-    { id: 'drake', name: 'Drake', place: 'OVO Athletic Centre', address: '90 Princes\' Blvd, Exhibition Place', lat: 43.6335, lon: -79.4165, fallback: 'ontarioPlace', seed: 0.13, hair: 0.18, girth: 1.15, scale: 1.02, aliases: ['drake'], lines: ['You made it to the 6. Don\'t get too comfortable.', 'OVO is a state of mind. The street is not.', 'If you\'re lost, you\'re just early.'] },
-    { id: 'tobi', name: 'Tobi Lütke', place: 'King Portland Centre', address: '620 King St W', lat: 43.6444, lon: -79.4014, fallback: 'kensington', seed: -2, hair: 0, girth: 0.98, scale: 1, hat: true, aliases: ['tobi', 'lutke', 'tobi lutke'], lines: ['I built a store. Somehow it became an empire.', 'Ship the thing. Then ship the next thing.', 'The city is a marketplace if you squint.'] },
-    { id: 'sam', name: 'Sam Altman', place: 'Metro Toronto Convention Centre', address: '255 Front St W', lat: 43.6434, lon: -79.3873, fallback: 'unionStation', seed: 0.01, hair: 0.22, girth: 0.94, scale: 1, aliases: ['sam', 'altman', 'sam altman'], lines: ['We\'re five minutes away from AGI. Again.', 'Don\'t worry about the details. The model will.', 'I was only in town for the keynote.'] },
-    { id: 'jensen', name: 'Jensen Huang', place: 'MaRS Discovery District', address: '101 College St', lat: 43.6597, lon: -79.3900, fallback: 'rom', seed: -3, hair: 0.48, girth: 1.02, scale: 1, aliases: ['jensen', 'huang', 'jensen huang'], lines: ['You need more GPUs. Everyone needs more GPUs.', 'The leather jacket is a uniform. The chips are the point.', 'This block could use a data centre.'] },
-    { id: 'hinton', name: 'Geoffrey Hinton', place: 'University of Toronto', address: 'King\'s College Circle', lat: 43.6607, lon: -79.3956, fallback: 'legislature', seed: 0.17, hair: 0.55, girth: 0.92, scale: 0.98, aliases: ['hinton', 'geoffrey', 'geoffrey hinton'], lines: ['I helped build the thing I\'m warning you about.', 'Be careful what you train.', 'The campus looks smaller from the sidewalk.'] },
-    { id: 'elon', name: 'Elon Musk', place: 'Tesla, Liberty Village', address: '1325 Dundas St W', lat: 43.6496, lon: -79.4248, fallback: 'harbourfront', seed: 0.08, hair: 0.12, girth: 1.06, scale: 1.02, aliases: ['elon', 'musk', 'elon musk'], lines: ['The robotaxi arrives next year. Probably.', 'I\'m posting through it.', 'Mars can wait. The light is red.'] },
-    { id: 'chow', name: 'Olivia Chow', place: 'Toronto City Hall', address: '100 Queen St W', lat: 43.6534, lon: -79.3841, fallback: 'cityHall', female: true, seed: 0.09, hair: 0.85, girth: 0.9, scale: 0.94, aliases: ['olivia', 'chow', 'olivia chow'], lines: ['Have you considered taking the TTC?', 'The city works when people share the street.', 'Mind the cyclists. They\'re faster than they look.'] },
-    { id: 'trudeau', name: 'Justin Trudeau', place: "Queen's Park", address: 'Queen\'s Park north lawn', lat: 43.6648, lon: -79.3925, fallback: 'legislature', seed: 0.07, hair: 0.48, girth: 0.98, scale: 1, aliases: ['trudeau', 'justin', 'justin trudeau'], lines: ['I\'m just visiting.', 'Sunny ways, even when the lake wind cuts through.', 'Nice jacket. Very practical.'] },
-    { id: 'kawhi', name: 'Kawhi Leonard', place: 'Scotiabank Arena', address: '40 Bay St', lat: 43.6435, lon: -79.3791, fallback: 'rogersCentre', seed: 0.14, hair: 0.08, girth: 1.18, scale: 1.1, aliases: ['kawhi', 'leonard', 'kawhi leonard'], lines: ['Board man gets paid.', 'I\'m only here for the series.', 'Keep it moving.'] },
-    { id: 'weeknd', name: 'The Weeknd', place: 'Queen Street West', address: 'Queen St W at Spadina', lat: 43.6496, lon: -79.3962, fallback: 'stLawrence', seed: 0.05, hair: 0.62, girth: 0.93, scale: 1, aliases: ['weeknd', 'the weeknd'], lines: ['The city\'s different after dark.', 'Don\'t save me. I like the walk.', 'Queen Street remembers everything.'] },
-    { id: 'nav', name: 'NAV', place: 'Entertainment District', address: 'John St at Richmond St W', lat: 43.6486, lon: -79.3904, fallback: 'cnTower', seed: 0.19, hair: 0.28, girth: 1.04, scale: 1, aliases: ['nav'], lines: ['Even the NPCs know my producer tag.', 'Keep it pushing.', 'If you hear the tag, you\'re already late.'] },
-    { id: 'reynolds', name: 'Ryan Reynolds', place: 'TIFF Lightbox', address: '350 King St W', lat: 43.6466, lon: -79.3902, fallback: 'distillery', seed: 0.16, hair: 0.3, girth: 1.06, scale: 1.02, aliases: ['ryan', 'reynolds', 'ryan reynolds'], lines: ['This cameo wasn\'t in the budget.', 'I\'m contractually obligated to look surprised.', 'Deadpool would\'ve charged extra.'] },
-    { id: 'deadmau5', name: 'Deadmau5', place: 'Rebel', address: '11 Polson St', lat: 43.6406, lon: -79.3536, fallback: 'sugarBeach', seed: 0.2, hair: 0.05, girth: 1.0, scale: 1, aliases: ['deadmau5', 'joel'], lines: ['I was told there would be better speakers.', 'The mouse head is in the car. Don\'t ask.', 'Turn it up. Then turn it down. I\'m particular.'] },
-    { id: 'ford', name: 'Doug Ford', place: 'Ontario Legislative Building', address: 'Queen\'s Park', lat: 43.6622, lon: -79.3915, fallback: 'cityHall', seed: 0.18, hair: 0.2, girth: 1.16, scale: 1.04, aliases: ['doug', 'ford', 'doug ford'], lines: ['Folks, I\'ve got a plan.', 'We\'re getting it done. The details are downtown.', 'That was a different meeting.'] },
-    { id: 'keanu', name: 'Keanu Reeves', place: 'Royal Alexandra Theatre', address: '260 King St W', lat: 43.6473, lon: -79.3873, fallback: 'harbourfront', seed: 0.03, hair: 0.5, girth: 1.0, scale: 1.03, aliases: ['keanu', 'reeves', 'keanu reeves'], lines: ['Nice city. Watch your step.', 'You\'re breathtaking. The intersection is not.', 'Be kind. Then cross on the signal.'] }
+    { id: 'drake', name: 'Drake', place: 'OVO Athletic Centre', address: '90 Princes\' Blvd, Exhibition Place', lat: 43.6335, lon: -79.4165, fallback: 'ontarioPlace', seed: 0.13, hair: 0.18, girth: 1.15, scale: 1.02, aliases: ['drake'], lines: ['Toronto teaches you timing. The cold, the traffic, the people—everything makes you wait for your moment.', 'Everybody wants the view from the top. Nobody asks what it costs to keep the lights on up there.', 'Move smart through the city. The 6 remembers who showed love before the cameras arrived.', 'Now go make a story worth putting on the next record.'] },
+    { id: 'tobi', name: 'Tobi Lütke', place: 'King Portland Centre', address: '620 King St W', lat: 43.6444, lon: -79.4014, fallback: 'kensington', seed: -2, hair: 0, girth: 0.98, scale: 1, hat: true, aliases: ['tobi', 'lutke', 'tobi lutke'], lines: ['A city is a platform too. Streets are the interface; every shop is somebody shipping an idea.', 'Perfect plans are usually fear wearing a nice jacket. Build the smallest useful thing and learn from reality.', 'Scale only makes the truth louder. Good systems get better; bad ones become expensive.', 'You have enough information. Ship your next move.'] },
+    { id: 'sam', name: 'Sam Altman', place: 'Metro Toronto Convention Centre', address: '255 Front St W', lat: 43.6434, lon: -79.3873, fallback: 'unionStation', seed: 0.01, hair: 0.22, girth: 0.94, scale: 1, aliases: ['sam', 'altman', 'sam altman'], lines: ['The future never arrives all at once. It shows up as a strange demo, then suddenly everybody depends on it.', 'Capability is the easy headline. The harder question is who gets agency when the system becomes powerful.', 'Toronto has the right kind of ambition—serious work, low drama, excellent arguments over coffee.', 'Stay curious, but keep your hand on the steering wheel.'] },
+    { id: 'jensen', name: 'Jensen Huang', place: 'MaRS Discovery District', address: '101 College St', lat: 43.6597, lon: -79.3900, fallback: 'rom', seed: -3, hair: 0.48, girth: 1.02, scale: 1, aliases: ['jensen', 'huang', 'jensen huang'], lines: ['Every impossible thing starts as a workload nobody knows how to run fast enough.', 'Accelerated computing is not about one chip. It is the whole stack agreeing to move together.', 'The leather jacket saves decision time. The architecture takes slightly longer.', 'Build for the problem that will matter in ten years, then survive long enough to see it.'] },
+    { id: 'hinton', name: 'Geoffrey Hinton', place: 'University of Toronto', address: 'King\'s College Circle', lat: 43.6607, lon: -79.3956, fallback: 'legislature', seed: 0.17, hair: 0.55, girth: 0.92, scale: 0.98, aliases: ['hinton', 'geoffrey', 'geoffrey hinton'], lines: ['For years we asked whether a machine could learn. We should have spent more time asking what happens when it learns too well.', 'Intelligence is not the same thing as wisdom. Humans demonstrate that rather convincingly.', 'The work was exciting because it seemed impossible. The consequences are serious for exactly the same reason.', 'Keep asking uncomfortable questions. Optimism is useful; scrutiny is essential.'] },
+    { id: 'chow', name: 'Olivia Chow', place: 'Toronto City Hall', address: '100 Queen St W', lat: 43.6534, lon: -79.3841, fallback: 'cityHall', female: true, seed: 0.09, hair: 0.85, girth: 0.9, scale: 0.94, aliases: ['olivia', 'chow', 'olivia chow'], lines: ['Toronto belongs to the people who keep showing up for one another—on the bus, at the library, and on every block.', 'A good city does not ask whether you are rich before it gives you a safe street, a warm home, or a way to get around.', 'The bicycle is still the fastest way through downtown. I have tested this more than once.', 'Take care of your neighbours. That is how a city becomes a community.'] },
+    { id: 'kawhi', name: 'Kawhi Leonard', place: 'Scotiabank Arena', address: '40 Bay St', lat: 43.6435, lon: -79.3791, fallback: 'rogersCentre', seed: 0.14, hair: 0.08, girth: 1.18, scale: 1.1, aliases: ['kawhi', 'leonard', 'kawhi leonard'], lines: ['Toronto remembers the work. Not the noise before the game—the possessions when everybody stayed locked in.', 'Pressure is just the moment asking whether you prepared for it.', 'One bounce can feel like four when the whole country is holding its breath.', 'Stay patient. Get to your spot. Finish the play.'] }
   ];
 
   const inCity = (x, z) => x > CITY_BOUNDS.minX + 40 && x < CITY_BOUNDS.maxX - 40 && z > CITY_BOUNDS.minZ + 40 && z < CITY_BOUNDS.maxZ - 40;
@@ -49,6 +41,37 @@
   } catch (err) {
     buildingAt = () => false;
   }
+  // Landmark outlines that are a solid building, not a park or a plaza. The footprint
+  // parts do not cover courtyards, so a cameo can otherwise stand inside the mesh.
+  const SOLID_LANDMARKS = new Set(['cityHall', 'scotiabankArena', 'rogersCentre', 'cnTower', 'royalYork', 'flatiron', 'stLawrence', 'cinesphere']);
+  let solidRings = null;
+  function ringsOfSolidLandmarks() {
+    if (solidRings) return solidRings;
+    solidRings = [];
+    const sites = window.CITY.GEO?.landmarks || {};
+    for (const id of SOLID_LANDMARKS) {
+      const ring = sites[id]?.ring;
+      if (ring?.length >= 6) solidRings.push(ring);
+    }
+    return solidRings;
+  }
+  function insideRing(ring, x, z) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 2; i < ring.length; i += 2) {
+      const xi = ring[i], zi = ring[i + 1], xj = ring[j], zj = ring[j + 1];
+      if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / ((zj - zi) || 1e-9) + xi) inside = !inside;
+      j = i;
+    }
+    return inside;
+  }
+  function insideSolidLandmark(x, z) {
+    for (const ring of ringsOfSolidLandmarks()) {
+      if (insideRing(ring, x, z)) return true;
+      // A point a few metres from the wall still reads as standing inside the mesh.
+      if (insideRing(ring, x + 3, z) || insideRing(ring, x - 3, z) || insideRing(ring, x, z + 3) || insideRing(ring, x, z - 3)) return true;
+    }
+    return false;
+  }
   let reject = () => false;
 
   // A curb island that isn't a median, clear of buildings, water, tracks and flyovers.
@@ -56,8 +79,10 @@
     if (!isOnLand(x, z, 2) || waterAt(x, z)) return false;
     const block = blockAt(x, z);
     if (!block || block.median) return false;
+    if (insideSolidLandmark(x, z)) return false;
     if (buildingAt(x, z, 1)) return false;
-    if (buildingAt(x + 0.5, z, 1) || buildingAt(x - 0.5, z, 1) || buildingAt(x, z + 0.5, 1) || buildingAt(x, z - 0.5, 1)) return false;
+    const pad = 1.6;
+    if (buildingAt(x + pad, z, 1) || buildingAt(x - pad, z, 1) || buildingAt(x, z + pad, 1) || buildingAt(x, z - pad, 1)) return false;
     if (window.CITY.subwayCutAt && window.CITY.subwayCutAt(x, z, 1, false)) return false;
     if (window.CITY.deckHeightAt && window.CITY.deckHeightAt(x, z, 1.5) > 2) return false;
     if (reject(x, z)) return false;
@@ -67,25 +92,28 @@
   // Sidewalk samples: past the carriageway edge, on the curb island, nearest the landmark first.
   function samplesAround(origin) {
     const out = [];
-    const roads = window.CITY.nearestRoads(origin.x, origin.z, 120)
+    const roads = window.CITY.nearestRoads(origin.x, origin.z, 220)
       .filter((n) => n.road && n.road.cls !== 'motorway' && n.road.cls !== 'motorway_link' && !n.road.raised);
-    for (const n of roads.slice(0, 6)) {
+    for (const n of roads.slice(0, 12)) {
       const half = Math.max(3.2, (n.road.w || 8) * 0.5);
       const sx = -n.dz;
       const sz = n.dx;
-      for (const along of [0, 6, -6, 12, -12, 18, -18, 26, -26, 34, -34]) {
+      const name = n.road.name || '';
+      const service = n.road.cls === 'service' || /loading|dock/i.test(name);
+      for (const along of [0, 6, -6, 12, -12, 18, -18, 26, -26, 34, -34, 48, -48]) {
         for (const sign of [1, -1]) {
-          for (const extra of [1.8, 2.6, 3.4, 4.4]) {
+          for (const extra of [2.4, 3.4, 4.6, 6.2]) {
             const x = n.px + n.dx * along + sx * sign * (half + extra);
             const z = n.pz + n.dz * along + sz * sign * (half + extra);
             const dLand = Math.hypot(x - origin.x, z - origin.z);
-            if (dLand > 85) continue;
-            out.push({ x, z, dLand, hx: n.dx, hz: n.dz, extra });
+            if (dLand > 150) continue;
+            const rank = dLand + (service ? 80 : 0) + (n.road.cls === 'residential' ? 12 : 0);
+            out.push({ x, z, dLand, rank, hx: n.dx, hz: n.dz, extra });
           }
         }
       }
     }
-    out.sort((a, b) => a.dLand - b.dLand || a.extra - b.extra);
+    out.sort((a, b) => a.rank - b.rank || a.extra - b.extra);
     return out;
   }
 
@@ -197,6 +225,8 @@
   let hintEl = null;
   let talking = null;
   let line = 0;
+  let cinematic = null;
+  let conversationLight = null;
   const tmp = new THREE.Vector3();
   const headQ = new THREE.Quaternion();
   const headP = new THREE.Vector3();
@@ -292,10 +322,23 @@
     settle();
     crowd = new PersonCrowd(CHARACTERS.length, { farDistance: 48, castShadow: true });
     crowd.meshes.forEach((m) => scene.add(m));
+    conversationLight = new THREE.PointLight(0xffd7ad, 54, 13, 2);
+    conversationLight.name = 'CameoConversationFill';
+    conversationLight.visible = false;
+    conversationLight.castShadow = false;
+    scene.add(conversationLight);
     rigs = CHARACTERS.map((c) => {
       const rig = new PersonRig({ seed: c.look.seed, scale: c.look.scale, female: c.look.female, girth: c.look.girth, hair: c.look.hair });
       rig.reset(c.npc.x, c.npc.z, c.homeYaw || c.npc.yaw, ground);
       c.rig = rig;
+      if (window.CITY.CAST_PRIORITY?.includes(c.id) && window.CITY.cast) {
+        c.castActor = window.CITY.cast.create(c.id, {
+          scene,
+          onReady: () => {
+            if (c.hat) c.hat.visible = c.beard.visible = false;
+          }
+        });
+      }
       if (c.look.hat) {
         c.hat = makeFlatCap();
         c.beard = makeBeard();
@@ -357,6 +400,10 @@
     if (!crowd) return;
     const step = Number.isFinite(dt) ? dt : 0.016;
     const cam = camera.position;
+    if (conversationLight) {
+      conversationLight.visible = !!talking;
+      if (talking) conversationLight.position.copy(cam);
+    }
     crowd.begin();
     for (let i = 0; i < CHARACTERS.length; i++) {
       const c = CHARACTERS[i];
@@ -364,6 +411,7 @@
       const el = labels[i];
       if (d > 110) {
         el.hidden = true;
+        c.castActor?.setVisible(false);
         if (c.hat) c.hat.visible = c.beard.visible = false;
         continue;
       }
@@ -373,11 +421,18 @@
         if (pd < 8) yaw = Math.atan2(playerEnt.position.x - c.npc.x, playerEnt.position.z - c.npc.z);
       }
       c.rig.update(step, c.npc.x, c.npc.z, yaw, ground);
-      if (c.hat) {
+      if (c.castActor) {
+        c.castActor.setTransform(c.npc.x, ground(c, c.npc.x, c.npc.z), c.npc.z, yaw);
+        c.castActor.setVisible(true);
+        c.castActor.update(step, { talking: talking === c });
+      }
+      if (c.hat && !c.castActor?.ready) {
         poseAccessory(c.hat, c.rig, 0, 0.078, 0.04);
         poseAccessory(c.beard, c.rig, 0, -0.04, 0.085);
+      } else if (c.hat) {
+        c.hat.visible = c.beard.visible = false;
       }
-      crowd.add(c.rig, d);
+      if (!c.castActor?.ready) crowd.add(c.rig, d);
       if (d < 24) {
         tmp.set(c.npc.x, 1.9, c.npc.z).project(camera);
         if (tmp.z < 1) {
@@ -401,6 +456,62 @@
     hintEl.textContent = line < talking.lines.length - 1 ? 'Space' : 'Space to close';
   }
 
+  function frameConversation(character, playerEnt, immediate = false) {
+    const app = window.__CITY_APP;
+    const cameras = app?.cameraSystem;
+    if (!cameras || !character || !playerEnt) return;
+    if (!cinematic) {
+      cinematic = {
+        previous: cameras.cinema,
+        fov: cameras.camera.fov,
+        fromPos: cameras.currentPos.clone(),
+        fromLook: cameras.currentLookAt.clone(),
+        started: performance.now()
+      };
+    } else {
+      cinematic.fromPos.copy(cameras.currentPos);
+      cinematic.fromLook.copy(cameras.currentLookAt);
+      cinematic.started = performance.now();
+    }
+    const baseY = ground(character, character.npc.x, character.npc.z);
+    const target = new THREE.Vector3(character.npc.x, baseY + 1.5, character.npc.z);
+    const towardPlayer = new THREE.Vector3(
+      playerEnt.position.x - character.npc.x, 0,
+      playerEnt.position.z - character.npc.z
+    );
+    if (towardPlayer.lengthSq() < 0.01) towardPlayer.set(0, 0, 1);
+    towardPlayer.normalize();
+    const side = new THREE.Vector3(-towardPlayer.z, 0, towardPlayer.x);
+    const sideSign = line % 2 ? -1 : 1;
+    const destination = target.clone()
+      .addScaledVector(towardPlayer, line % 2 ? 2.35 : 2.7)
+      .addScaledVector(side, sideSign * (line % 2 ? 0.78 : 1.05));
+    destination.y += line % 2 ? 0.05 : 0.18;
+    const fromPos = cinematic.fromPos.clone();
+    const fromLook = cinematic.fromLook.clone();
+    const started = immediate ? performance.now() - 850 : cinematic.started;
+    cameras.cinema = () => {
+      const raw = Math.min(1, Math.max(0, (performance.now() - started) / 850));
+      const ease = raw * raw * (3 - 2 * raw);
+      const drift = Math.sin(performance.now() * 0.00032) * 0.12;
+      const pos = fromPos.clone().lerp(destination, ease).addScaledVector(side, drift * ease);
+      const look = fromLook.clone().lerp(target, ease);
+      return { pos: pos.toArray(), look: look.toArray(), fov: 43 };
+    };
+  }
+
+  function endConversationCamera() {
+    const cameras = window.__CITY_APP?.cameraSystem;
+    if (cameras && cinematic) {
+      cameras.cinema = cinematic.previous;
+      cameras.camera.fov = cinematic.fov;
+      cameras.camera.updateProjectionMatrix();
+      cameras.initialized = false;
+    }
+    cinematic = null;
+    document.body.classList.remove('cameo-cinematic');
+  }
+
   function tryTalk() {
     if (talking) return true;
     const app = window.__CITY_APP;
@@ -411,6 +522,9 @@
     talking = near;
     line = 0;
     window.CITY.cameoTalk = true;
+    ent.heading = Math.atan2(near.npc.x - ent.position.x, near.npc.z - ent.position.z);
+    document.body.classList.add('cameo-cinematic');
+    frameConversation(near, ent);
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
     box.hidden = false;
     prompt.hidden = true;
@@ -421,10 +535,16 @@
   function advance() {
     if (!talking) return;
     if (line >= talking.lines.length - 1) close();
-    else { line += 1; showLine(); }
+    else {
+      line += 1;
+      showLine();
+      const ent = window.__CITY_APP?.controllerManager.getActiveEntity();
+      if (ent) frameConversation(talking, ent);
+    }
   }
 
   function close() {
+    endConversationCamera();
     talking = null;
     line = 0;
     window.CITY.cameoTalk = false;
