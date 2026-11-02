@@ -778,6 +778,7 @@
     if (enterBtn) enterBtn.addEventListener('click', () => {
       if (enterBtn.disabled) return;
       document.getElementById('loading-overlay').classList.add('hidden');
+      window.umami?.track?.('game_started');
     });
     const poster = document.getElementById('gta-poster');
     if (poster) poster.addEventListener('error', () => {

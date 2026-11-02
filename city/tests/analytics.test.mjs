@@ -30,6 +30,12 @@ for (const page of ['index.html', 'explore.html']) {
   });
 }
 
+test('the game entry records an aggregate gameplay start event', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'explore.html'), 'utf8');
+  assert.match(html, /window\.umami\?\.track\?\.\('game_started'\)/);
+  assert.doesNotMatch(html, /umami\.identify\(/, 'game analytics do not assign a direct player ID');
+});
+
 test('the production build leaves the external analytics tags untouched', (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'toronto-analytics-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

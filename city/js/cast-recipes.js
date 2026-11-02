@@ -49,7 +49,7 @@
       beard: 0.12,
       brows: '#8a6848',
       top: 'jacket',
-      jacket: '#f4f7fb',
+      jacket: '#3e6794',
       jacketRough: 0.84,
       jacketMetal: 0,
       jeans: '#31415c',
@@ -57,12 +57,8 @@
       shoes: '#2c2c2c',
       sole: '#c8c4bc',
       glasses: false,
-      // Grey wool flat cap, blue eyes, and the blue-check shirt from his reference.
-      cap: 'flat',
+      cap: false,
       eyeMap: './assets/characters/generated/tobi-eye.png',
-      shirtMap: './assets/characters/generated/tobi-gingham.png',
-      shirtRepeat: [5.2, 5.2],
-      capMap: './assets/characters/generated/tobi-wool.png',
       headScale: [1, 1, 1],
       modelScale: [0.985, 1, 1]
     },

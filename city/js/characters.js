@@ -474,6 +474,7 @@
       cinematic.started = performance.now();
     }
     const baseY = ground(character, character.npc.x, character.npc.z);
+    const target = new THREE.Vector3(character.npc.x, baseY + 1.5, character.npc.z);
     const towardPlayer = new THREE.Vector3(
       playerEnt.position.x - character.npc.x, 0,
       playerEnt.position.z - character.npc.z
@@ -482,17 +483,10 @@
     towardPlayer.normalize();
     const side = new THREE.Vector3(-towardPlayer.z, 0, towardPlayer.x);
     const sideSign = line % 2 ? -1 : 1;
-    // Look at the gap between the two of them, from the side, so one body
-    // is not sitting inside the other in the frame.
-    const target = new THREE.Vector3(
-      (character.npc.x + playerEnt.position.x) * 0.5,
-      baseY + 1.48,
-      (character.npc.z + playerEnt.position.z) * 0.5
-    );
     const destination = target.clone()
-      .addScaledVector(side, sideSign * 2.35)
-      .addScaledVector(towardPlayer, 0.2);
-    destination.y = baseY + 1.62;
+      .addScaledVector(towardPlayer, line % 2 ? 2.35 : 2.7)
+      .addScaledVector(side, sideSign * (line % 2 ? 0.78 : 1.05));
+    destination.y += line % 2 ? 0.05 : 0.18;
     const fromPos = cinematic.fromPos.clone();
     const fromLook = cinematic.fromLook.clone();
     const started = immediate ? performance.now() - 850 : cinematic.started;
@@ -518,23 +512,6 @@
     document.body.classList.remove('cameo-cinematic');
   }
 
-  function separateForTalk(ent, character) {
-    const minGap = 1.55;
-    let dx = ent.position.x - character.npc.x;
-    let dz = ent.position.z - character.npc.z;
-    let gap = Math.hypot(dx, dz);
-    if (gap < 0.08) { dx = 0; dz = 1; gap = 1; }
-    if (gap < minGap) {
-      ent.position.x = character.npc.x + (dx / gap) * minGap;
-      ent.position.z = character.npc.z + (dz / gap) * minGap;
-    }
-    ent.speed = 0;
-    ent.verticalVel = 0;
-    ent.heading = Math.atan2(character.npc.x - ent.position.x, character.npc.z - ent.position.z);
-    // The player model is parented to this group, so moving the group is enough.
-    if (ent.mesh) ent.mesh.position.copy(ent.position);
-  }
-
   function tryTalk() {
     if (talking) return true;
     const app = window.__CITY_APP;
@@ -545,7 +522,7 @@
     talking = near;
     line = 0;
     window.CITY.cameoTalk = true;
-    separateForTalk(ent, near);
+    ent.heading = Math.atan2(near.npc.x - ent.position.x, near.npc.z - ent.position.z);
     document.body.classList.add('cameo-cinematic');
     frameConversation(near, ent);
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();

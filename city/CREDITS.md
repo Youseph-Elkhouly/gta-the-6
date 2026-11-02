@@ -49,8 +49,8 @@ License (`LICENSE`). Third-party code, data and assets keep their own licences, 
   LICENSE. Built on **@takram/three-atmosphere 0.19.1+fork.7** and **@takram/three-geospatial 0.9.1+fork.7** (MIT, © takram; compatibility fixes by John Fewell).
 - **EZ-Tree** by Dan Greenheck: procedural trees. MIT. https://github.com/dgreenheck/ez-tree
 - **lil-gui** (loaded only for the `?waterTune` tuning panel). MIT.
-- **Umami** (https://umami.is), self-hosted at umami.cloud6711.workers.dev: privacy-friendly page analytics, counted
-  only on sloptoronto.ca; no cookies. MIT.
+- **Umami** (https://umami.is), self-hosted at umami.cloud6711.workers.dev: privacy-friendly page visits and aggregate
+  game-start events, counted only on sloptoronto.ca; no direct player identity or session replay. MIT.
 - **aalghooneh/slop-toronto** by aalghooneh, another Toronto fork of Slop New York. MIT.
   https://github.com/aalghooneh/slop-toronto. Ported from it, adapted to this city's scripts and data:
   - the TTC streetcars (`js/streetcars.js`: track chaining & direction of travel, stops, signals, queuing, the Flexity

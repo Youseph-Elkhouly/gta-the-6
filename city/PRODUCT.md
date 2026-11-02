@@ -34,7 +34,7 @@ The city is built from the City of Toronto's own open data and OpenStreetMap at 
 ## Capabilities and Constraints
 
 - A static site: `index.html` + `css/landing.css`, built by `npm run build` into fingerprinted `dist/` and served by a Cloudflare Worker. No framework on the landing page.
-- Page analytics: self-hosted Umami, visit counter only, no cookies, no session replay.
+- Analytics: self-hosted Umami page visits plus an aggregate `game_started` event when someone enters play; no direct player identity or session replay.
 - Data licences require attribution wherever the data is shown: City of Toronto Open Data (Open Government Licence – Toronto), © OpenStreetMap contributors (ODbL), AWS Terrain Tiles (SRTM). See `CREDITS.md`.
 
 ## Brand Commitments
