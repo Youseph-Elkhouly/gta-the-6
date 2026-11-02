@@ -531,8 +531,8 @@
     ent.speed = 0;
     ent.verticalVel = 0;
     ent.heading = Math.atan2(character.npc.x - ent.position.x, character.npc.z - ent.position.z);
+    // The player model is parented to this group, so moving the group is enough.
     if (ent.mesh) ent.mesh.position.copy(ent.position);
-    ent.castActor?.setTransform(ent.position.x, ent.position.y, ent.position.z, ent.heading);
   }
 
   function tryTalk() {
