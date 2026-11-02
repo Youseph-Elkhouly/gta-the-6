@@ -1,6 +1,6 @@
 # GTA: THE 6
 
-https://github.com/user-attachments/assets/d91b6e5f-e2af-422c-b4c7-731daa7c86dd
+https://github.com/user-attachments/assets/ea565745-0d38-4789-bd9c-a4bebea19eab
 
 Explore Toronto in a browser-based open-world game. Walk, cycle, drive, and fly through a detailed 3D city built around
 real Toronto streets, landmarks, transit, and waterfront locations.
