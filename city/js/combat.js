@@ -357,7 +357,7 @@
         for (let e = 0; e < edges.length; e++) {
           const edge = edges[e];
           const hitT = raySegment(ox, oz, dx, dz, edge.a.x, edge.a.z, edge.b.x, edge.b.z);
-          if (hitT === null || hitT < 0.35 || hitT > maxT) continue;
+          if (hitT === null || hitT < 0.12 || hitT > maxT) continue;
           const y = oy + dy * hitT;
           if (y < minY - 0.05 || y > maxY + 0.05) continue;
           if (!best || hitT < best.t) best = { t: hitT, nx: edge.nx, nz: edge.nz };
@@ -420,21 +420,16 @@
 
   function shoot() {
     const aim = aimBasis();
-    // Converge the physical muzzle ray onto the exact world point under the
-    // screen-centred reticle; camera-to-chest parallax no longer shifts hits.
-    pistol.updateWorldMatrix(true, false);
-    muzzle.copy(pistol.userData.muzzleLocal).applyMatrix4(pistol.matrixWorld);
-    const ox = pistol.visible ? muzzle.x : aim.ox;
-    const oy = pistol.visible ? muzzle.y : aim.oy;
-    const oz = pistol.visible ? muzzle.z : aim.oz;
-    const dx = aim.target.x - ox;
-    const dy = aim.target.y - oy;
-    const dz = aim.target.z - oz;
-    const shotRange = Math.hypot(dx, dy, dz) || 1;
-    const invLen = 1 / shotRange;
-    const rayX = dx * invLen;
-    const rayY = dy * invLen;
-    const rayZ = dz * invLen;
+    // The shot is the camera ray through the reticle, started just in front of
+    // the chest. A muzzle tucked behind the coat used to aim the ray at the
+    // player's own neck and the bullet never left the body.
+    const ox = aim.ox + aim.dx * 0.55;
+    const oy = aim.oy + aim.dy * 0.55;
+    const oz = aim.oz + aim.dz * 0.55;
+    const rayX = aim.dx;
+    const rayY = aim.dy;
+    const rayZ = aim.dz;
+    const shotRange = RANGE;
     let bestT = shotRange;
     let kind = 'miss';
     let targetId = null;
@@ -564,8 +559,13 @@
   }
 
   function tracer(x, y, z) {
-    pistol.updateWorldMatrix(true, false);
+    const aim = aimBasis();
+    pistol.updateWorldMatrix(true, true);
     muzzle.copy(pistol.userData.muzzleLocal).applyMatrix4(pistol.matrixWorld);
+    const ahead = (muzzle.x - aim.ox) * aim.dx + (muzzle.y - aim.oy) * aim.dy + (muzzle.z - aim.oz) * aim.dz;
+    if (!(pistol.visible && ahead > 0.15)) {
+      muzzle.set(aim.ox + aim.dx * 0.55, aim.oy + aim.dy * 0.55, aim.oz + aim.dz * 0.55);
+    }
     const t = tracers[state.tracerCursor = (state.tracerCursor + 1) % tracers.length];
     const len = Math.max(0.05, muzzle.distanceTo(aimPoint.set(x, y, z)));
     t.position.copy(muzzle).add(aimPoint).multiplyScalar(0.5);
@@ -624,6 +624,21 @@
     rig.basis(axis.copy(elbow).sub(wrist), front, q2);
     rig.writeBone(foreBone, q2, elbow);
     return wrist;
+  }
+
+  const gripOffset = new THREE.Vector3(0.02, 0.072, 0.028);
+  // Barrel (+Z) along the hand's finger axis (+Y), grip hanging toward the palm.
+  const gripQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, Math.PI));
+
+  function holdGun(hand) {
+    if (pistol.parent !== hand) hand.attach(pistol);
+    pistol.position.copy(gripOffset);
+    pistol.quaternion.copy(gripQuat);
+    pistol.visible = true;
+  }
+
+  function releaseGun() {
+    if (pistol.parent !== scene) scene.attach(pistol);
   }
 
   function placeGun(at, aim) {
@@ -700,8 +715,12 @@
 
   function onPointerDown(e) {
     if (e.button !== 0 || state.trigger) return;
-    if (e.target !== canvas) return;
     if (blocked(e)) return;
+    // HUD layers can sit above the WebGL canvas and become the event target.
+    // Accept clicks anywhere inside the game canvas, but never through an open UI.
+    const rect = canvas?.getBoundingClientRect();
+    const locked = document.pointerLockElement === canvas;
+    if (!locked && (!rect || e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom)) return;
     state.trigger = true;
     tryFire();
   }
@@ -743,7 +762,7 @@
     state.tracerCursor = 0;
     makeHud();
     window.addEventListener('keydown', onKey, true);
-    canvas.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerdown', onPointerDown, true);
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', onPointerUp);
     window.addEventListener('lostpointercapture', onPointerUp);
@@ -770,7 +789,9 @@
     }
     const aiming = state.equipped && followCam() && cameras.aimZoom && !window.CITY.cameoTalk && !window.CITY.uiOverlay;
     person.combatAim = aiming;
-    person.aimShoulder = aiming && cameras.activePresetId === 'chase' ? 0.62 : 0;
+    // Armed hip-fire sits the camera on the right shoulder so the reticle is on
+    // the street, not on the back of the head. Aiming pulls it in a little more.
+    person.aimShoulder = !state.equipped || cameras.activePresetId !== 'chase' ? 0 : (aiming ? 0.62 : 0.5);
     if (aiming && (cameras.activePresetId === 'chase' || cameras.activePresetId === 'action' || cameras.activePresetId === 'pov')) {
       // The camera yaw is relative to the player's yaw. Steering toward the
       // camera's world direction while retaining a non-zero orbit offset creates
@@ -802,7 +823,9 @@
     }
     state.recoil = Math.max(0, state.recoil - dt * 7.5);
     const show = state.equipped && onFoot();
+    const actor = cm.entities.person.castActor;
     if (!show) {
+      if (pistol.parent !== scene) releaseGun();
       pistol.visible = false;
       flash.visible = false;
       hudText();
@@ -810,24 +833,30 @@
       return;
     }
     const aiming = cm.entities.person.combatAim && followCam();
-    if (aiming) {
-      const aim = aimBasis();
-      dir.set(aim.dx, aim.dy, aim.dz);
-      const reloadBlend = state.reloadLeft > 0 ? Math.sin(Math.min(1, (RELOAD - state.reloadLeft) / RELOAD) * Math.PI) : 0;
+    const aim = aimBasis();
+    dir.set(aim.dx, aim.dy, aim.dz);
+    const reloadBlend = state.reloadLeft > 0 ? Math.sin(Math.min(1, (RELOAD - state.reloadLeft) / RELOAD) * Math.PI) : 0;
+    if (actor?.ready && actor.bones?.rightHand) {
+      // The idle clip leaves the pistol arm hanging behind the coat. Hold it
+      // in front the whole time the gun is out, not only while aiming.
+      actor.poseWeapon({ aiming, aimDir: dir, reload: reloadBlend, recoil: state.recoil });
+      holdGun(actor.bones.rightHand);
+    } else if (aiming) {
+      releaseGun();
       const at = poseArm(dir, reloadBlend, state.recoil);
       if (at) {
         gunWrist.copy(at);
         placeGun(gunWrist, dir);
-        // Bring the left hand across as a support hand so the pistol reads as
-        // a deliberate two-handed aim rather than a detached, straight arm.
         camDir.copy(dir);
         camDir.y = 0;
         if (camDir.lengthSq() > 1e-6) camDir.normalize();
         supportTarget.copy(pistol.position).addScaledVector(right, 0.09).addScaledVector(camDir, -0.055).addScaledVector(up, -0.025);
         poseArm(dir, reloadBlend, 0, true, supportTarget);
-      }
-      else pistol.visible = false;
-    } else hangGun();
+      } else pistol.visible = false;
+    } else {
+      releaseGun();
+      hangGun();
+    }
     hudText();
     placeCrosshair();
     stepEffects(dt);

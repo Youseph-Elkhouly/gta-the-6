@@ -1424,6 +1424,7 @@ class ThirdPersonControllerManager {
           speed: p.speed,
           airborne: air > 0.02,
           aiming: !!p.combatAim,
+          armed: !!window.CITY.combat?.equipped,
           reloading: !!window.CITY.combat?.reloading
         });
       }
@@ -1537,6 +1538,11 @@ class ThirdPersonControllerManager {
 
   updatePerson(dt) {
     const p = this.entities.person;
+    if (window.CITY.cameoTalk) {
+      p.speed = 0;
+      p.verticalVel = 0;
+      return;
+    }
     const maxWalk = this.keys.boost ? 8.2 : 4.4;
     const turnRate = 2.6;
 

@@ -41,6 +41,37 @@
   } catch (err) {
     buildingAt = () => false;
   }
+  // Landmark outlines that are a solid building, not a park or a plaza. The footprint
+  // parts do not cover courtyards, so a cameo can otherwise stand inside the mesh.
+  const SOLID_LANDMARKS = new Set(['cityHall', 'scotiabankArena', 'rogersCentre', 'cnTower', 'royalYork', 'flatiron', 'stLawrence', 'cinesphere']);
+  let solidRings = null;
+  function ringsOfSolidLandmarks() {
+    if (solidRings) return solidRings;
+    solidRings = [];
+    const sites = window.CITY.GEO?.landmarks || {};
+    for (const id of SOLID_LANDMARKS) {
+      const ring = sites[id]?.ring;
+      if (ring?.length >= 6) solidRings.push(ring);
+    }
+    return solidRings;
+  }
+  function insideRing(ring, x, z) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 2; i < ring.length; i += 2) {
+      const xi = ring[i], zi = ring[i + 1], xj = ring[j], zj = ring[j + 1];
+      if ((zi > z) !== (zj > z) && x < (xj - xi) * (z - zi) / ((zj - zi) || 1e-9) + xi) inside = !inside;
+      j = i;
+    }
+    return inside;
+  }
+  function insideSolidLandmark(x, z) {
+    for (const ring of ringsOfSolidLandmarks()) {
+      if (insideRing(ring, x, z)) return true;
+      // A point a few metres from the wall still reads as standing inside the mesh.
+      if (insideRing(ring, x + 3, z) || insideRing(ring, x - 3, z) || insideRing(ring, x, z + 3) || insideRing(ring, x, z - 3)) return true;
+    }
+    return false;
+  }
   let reject = () => false;
 
   // A curb island that isn't a median, clear of buildings, water, tracks and flyovers.
@@ -48,8 +79,10 @@
     if (!isOnLand(x, z, 2) || waterAt(x, z)) return false;
     const block = blockAt(x, z);
     if (!block || block.median) return false;
+    if (insideSolidLandmark(x, z)) return false;
     if (buildingAt(x, z, 1)) return false;
-    if (buildingAt(x + 0.5, z, 1) || buildingAt(x - 0.5, z, 1) || buildingAt(x, z + 0.5, 1) || buildingAt(x, z - 0.5, 1)) return false;
+    const pad = 1.6;
+    if (buildingAt(x + pad, z, 1) || buildingAt(x - pad, z, 1) || buildingAt(x, z + pad, 1) || buildingAt(x, z - pad, 1)) return false;
     if (window.CITY.subwayCutAt && window.CITY.subwayCutAt(x, z, 1, false)) return false;
     if (window.CITY.deckHeightAt && window.CITY.deckHeightAt(x, z, 1.5) > 2) return false;
     if (reject(x, z)) return false;
@@ -59,25 +92,28 @@
   // Sidewalk samples: past the carriageway edge, on the curb island, nearest the landmark first.
   function samplesAround(origin) {
     const out = [];
-    const roads = window.CITY.nearestRoads(origin.x, origin.z, 120)
+    const roads = window.CITY.nearestRoads(origin.x, origin.z, 220)
       .filter((n) => n.road && n.road.cls !== 'motorway' && n.road.cls !== 'motorway_link' && !n.road.raised);
-    for (const n of roads.slice(0, 6)) {
+    for (const n of roads.slice(0, 12)) {
       const half = Math.max(3.2, (n.road.w || 8) * 0.5);
       const sx = -n.dz;
       const sz = n.dx;
-      for (const along of [0, 6, -6, 12, -12, 18, -18, 26, -26, 34, -34]) {
+      const name = n.road.name || '';
+      const service = n.road.cls === 'service' || /loading|dock/i.test(name);
+      for (const along of [0, 6, -6, 12, -12, 18, -18, 26, -26, 34, -34, 48, -48]) {
         for (const sign of [1, -1]) {
-          for (const extra of [1.8, 2.6, 3.4, 4.4]) {
+          for (const extra of [2.4, 3.4, 4.6, 6.2]) {
             const x = n.px + n.dx * along + sx * sign * (half + extra);
             const z = n.pz + n.dz * along + sz * sign * (half + extra);
             const dLand = Math.hypot(x - origin.x, z - origin.z);
-            if (dLand > 85) continue;
-            out.push({ x, z, dLand, hx: n.dx, hz: n.dz, extra });
+            if (dLand > 150) continue;
+            const rank = dLand + (service ? 80 : 0) + (n.road.cls === 'residential' ? 12 : 0);
+            out.push({ x, z, dLand, rank, hx: n.dx, hz: n.dz, extra });
           }
         }
       }
     }
-    out.sort((a, b) => a.dLand - b.dLand || a.extra - b.extra);
+    out.sort((a, b) => a.rank - b.rank || a.extra - b.extra);
     return out;
   }
 
@@ -438,7 +474,6 @@
       cinematic.started = performance.now();
     }
     const baseY = ground(character, character.npc.x, character.npc.z);
-    const target = new THREE.Vector3(character.npc.x, baseY + 1.5, character.npc.z);
     const towardPlayer = new THREE.Vector3(
       playerEnt.position.x - character.npc.x, 0,
       playerEnt.position.z - character.npc.z
@@ -447,10 +482,17 @@
     towardPlayer.normalize();
     const side = new THREE.Vector3(-towardPlayer.z, 0, towardPlayer.x);
     const sideSign = line % 2 ? -1 : 1;
+    // Look at the gap between the two of them, from the side, so one body
+    // is not sitting inside the other in the frame.
+    const target = new THREE.Vector3(
+      (character.npc.x + playerEnt.position.x) * 0.5,
+      baseY + 1.48,
+      (character.npc.z + playerEnt.position.z) * 0.5
+    );
     const destination = target.clone()
-      .addScaledVector(towardPlayer, line % 2 ? 2.35 : 2.7)
-      .addScaledVector(side, sideSign * (line % 2 ? 0.78 : 1.05));
-    destination.y += line % 2 ? 0.05 : 0.18;
+      .addScaledVector(side, sideSign * 2.35)
+      .addScaledVector(towardPlayer, 0.2);
+    destination.y = baseY + 1.62;
     const fromPos = cinematic.fromPos.clone();
     const fromLook = cinematic.fromLook.clone();
     const started = immediate ? performance.now() - 850 : cinematic.started;
@@ -476,6 +518,23 @@
     document.body.classList.remove('cameo-cinematic');
   }
 
+  function separateForTalk(ent, character) {
+    const minGap = 1.55;
+    let dx = ent.position.x - character.npc.x;
+    let dz = ent.position.z - character.npc.z;
+    let gap = Math.hypot(dx, dz);
+    if (gap < 0.08) { dx = 0; dz = 1; gap = 1; }
+    if (gap < minGap) {
+      ent.position.x = character.npc.x + (dx / gap) * minGap;
+      ent.position.z = character.npc.z + (dz / gap) * minGap;
+    }
+    ent.speed = 0;
+    ent.verticalVel = 0;
+    ent.heading = Math.atan2(character.npc.x - ent.position.x, character.npc.z - ent.position.z);
+    if (ent.mesh) ent.mesh.position.copy(ent.position);
+    ent.castActor?.setTransform(ent.position.x, ent.position.y, ent.position.z, ent.heading);
+  }
+
   function tryTalk() {
     if (talking) return true;
     const app = window.__CITY_APP;
@@ -486,7 +545,7 @@
     talking = near;
     line = 0;
     window.CITY.cameoTalk = true;
-    ent.heading = Math.atan2(near.npc.x - ent.position.x, near.npc.z - ent.position.z);
+    separateForTalk(ent, near);
     document.body.classList.add('cameo-cinematic');
     frameConversation(near, ent);
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();

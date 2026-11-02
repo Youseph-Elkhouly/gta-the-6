@@ -36,6 +36,28 @@ function landmarkView(teleportKey, siteId, eye, lookY, elapsed, out) {
   return true;
 }
 
+// Pull a chase camera back to the last clear sample when a turn would leave it inside a building.
+let buildingTest = null;
+function pullCameraFromBuildings(cam, x, y, z) {
+  if (!buildingTest) {
+    if (!window.CITY.buildingIndex || !window.CITY.GEO) return;
+    buildingTest = window.CITY.buildingIndex(window.CITY.GEO);
+  }
+  if (!buildingTest(cam.x, cam.z, y)) return;
+  const dx = cam.x - x;
+  const dz = cam.z - z;
+  const dist = Math.hypot(dx, dz) || 1;
+  for (let t = dist - 0.35; t > 0.7; t -= 0.28) {
+    const px = x + dx * (t / dist);
+    const pz = z + dz * (t / dist);
+    if (!buildingTest(px, pz, y)) {
+      cam.x = px;
+      cam.z = pz;
+      return;
+    }
+  }
+}
+
 class CameraSystem {
   constructor(domElement, controllerManager) {
     this.domElement = domElement;
@@ -83,12 +105,15 @@ class CameraSystem {
     // The WebGL canvas fills the play area. Suppress the browser's image/canvas
     // context menu here so right-button aiming can hold the zoom cleanly.
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    canvas.addEventListener('pointerdown', (e) => {
-      if (e.pointerType === 'mouse' && e.button === 2 && !window.CITY.uiOverlay) {
+    window.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const insideCanvas = document.pointerLockElement === canvas ||
+        (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
+      if (e.pointerType === 'mouse' && e.button === 2 && insideCanvas && !window.CITY.uiOverlay) {
         e.preventDefault();
         this.aimZoom = true;
       }
-    });
+    }, true);
     const stopAimZoom = (e) => {
       if (!e || e.button === 2 || e.type === 'blur' || e.type === 'pointercancel') this.aimZoom = false;
     };
@@ -278,12 +303,17 @@ class CameraSystem {
 
     switch (this.activePresetId) {
       case 'chase': {
+        const onFoot = entity.type === 'person';
         const aim = entity.aimShoulder || 0;
-        const aimZoom = entity.type === 'person' && this.aimZoom ? 0.58 : 1;
-        const followDist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.82 : 1) * aimZoom * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
-        const dist = entity.type === 'person' ? Math.max(3.4, followDist) : followDist;
-        const height = entity.chaseHeight * this.zoomMultiplier + Math.sin(this.orbitPitchOffset) * dist * 0.85;
-        const horizDist = Math.cos(this.orbitPitchOffset) * dist + speedLag;
+        const aiming = onFoot && !!entity.combatAim;
+        const aimZoom = onFoot && this.aimZoom ? 0.7 : 1;
+        const followDist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.84 : 1) * aimZoom * (1 + Math.min(0.18, this.smoothedSpeed * 0.008));
+        const dist = onFoot ? Math.max(aiming ? 2.35 : 3.25, followDist) : followDist;
+        const pitch = this.orbitPitchOffset;
+        const height = onFoot
+          ? 1.58 + Math.sin(pitch) * dist * 0.38
+          : entity.chaseHeight * this.zoomMultiplier + Math.sin(pitch) * dist * 0.85;
+        const horizDist = Math.cos(onFoot ? pitch * 0.85 : pitch) * dist + (onFoot ? speedLag * 0.35 : speedLag);
 
         desiredPos.set(
           entity.position.x - Math.sin(totalYaw) * horizDist,
@@ -301,11 +331,18 @@ class CameraSystem {
           desiredPos.z -= Math.sin(totalYaw) * aim;
         }
 
-        const lookUpBias = entity.type === 'helicopter' ? 0.2 : (entity.type === 'car' ? 0.52 : 1.55);
+        const shoulder = onFoot ? (entity.aimShoulder || 0) : 0;
+        const lookAhead = onFoot ? (aiming ? 18 : (shoulder ? 14 : 6)) : 5.2;
+        const lookUpBias = entity.type === 'helicopter' ? 0.2 : (entity.type === 'car' ? 0.52 : 0);
+        const lookY = onFoot
+          ? entity.position.y + 1.38 + Math.sin(-pitch) * (shoulder ? 6.5 : 2.4)
+          : entity.position.y + entity.cameraTargetOffset.y + lookUpBias;
+        // Same side offset as the camera, so the view runs beside the body
+        // instead of through the back of the head.
         desiredLook.set(
-          entity.position.x + Math.sin(entity.heading) * 5.2 + (aim ? Math.cos(entity.heading) * aim * 0.35 : 0),
-          entity.position.y + entity.cameraTargetOffset.y + lookUpBias,
-          entity.position.z + Math.cos(entity.heading) * 5.2 - (aim ? Math.sin(entity.heading) * aim * 0.35 : 0)
+          entity.position.x + Math.sin(entity.heading) * lookAhead + Math.cos(entity.heading) * shoulder,
+          lookY,
+          entity.position.z + Math.cos(entity.heading) * lookAhead - Math.sin(entity.heading) * shoulder
         );
         break;
       }
@@ -446,15 +483,16 @@ class CameraSystem {
         this.followOffset.subVectors(this.currentPos, entity.position);
         this.followLookOffset.subVectors(this.currentLookAt, entity.position);
       }
-      // Reposition the on-foot chase camera in the character's frame in one
-      // step. World-space easing across a sharp turn sends it through the player.
-      const k = entity.type === 'person' ? 1 : 1 - Math.exp(-dt * 8.5);
+      // Ease in the character's own frame. A hard snap makes mouse-look feel
+      // rigid, and a world-space follow cuts through the body on a sharp turn.
+      const k = entity.type === 'person' ? 1 - Math.exp(-dt * 16) : 1 - Math.exp(-dt * 8.5);
       this.followBaseY += (entity.position.y - this.followBaseY) * k;
       this.followOffset.lerp(desiredPos.sub(entity.position), k);
       this.followLookOffset.lerp(desiredLook.sub(entity.position), k);
       this.currentPos.set(entity.position.x, this.followBaseY, entity.position.z).add(this.followOffset);
       this.currentLookAt.set(entity.position.x, this.followBaseY, entity.position.z).add(this.followLookOffset);
       this.currentPos.y = Math.max(0.55, this.currentPos.y);
+      if (entity.type === 'person') pullCameraFromBuildings(this.currentPos, entity.position.x, entity.position.y + 1.5, entity.position.z);
     } else {
       this.followEntity = null;
       const k = 1 - Math.exp(-dt * 8.5);
