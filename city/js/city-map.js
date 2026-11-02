@@ -33,30 +33,30 @@ const GRID_BEARING = (GEO.frame && GEO.frame.bearingDeg) || 0; // grid north, de
 // lighter than the blocks they run between, muted parks, savanna & water; a green GPS route, white landmarks & player,
 // cyan search hits and amber expressways
 const MAP = {
-  water: '#0a1118',
-  land: '#171a17', // the land around the city (savanna & hills)
-  landEdge: '#252c35',
-  streets: '#363f4b', // the street level of the detailed city: the roadway left between the blocks
-  shore: '#4f5b6b',
-  park: '#19301f',
-  parkEdge: '#24432f',
-  wild: '#1b2419', // woods, scrub & bare rock
-  rock: '#2a2a28',
-  block: '#1c2128',
-  blockEdge: '#272e37',
-  pond: '#0f2535',
-  pondEdge: '#1d3d54',
-  stream: '#173247',
-  buildings: ['#242a32', '#2b323c', '#343c48'],
-  buildingEdge: '#171b21',
-  landmarkFill: 'rgba(255, 255, 255, 0.06)',
-  landmarkEdge: 'rgba(255, 255, 255, 0.38)',
-  mainRoads: '#3a434f',
-  highway: '#b27a35',
-  bridge: '#c08a3e',
-  route: '#2f8bff',
-  search: '#5fd0ff',
-  halo: 'rgba(8, 11, 15, 0.9)'
+  water: '#091715',
+  land: '#171d16', // GTA-era olive graphite ground
+  landEdge: '#3b4933',
+  streets: '#4a4b3c',
+  shore: '#6a7650',
+  park: '#1d3822',
+  parkEdge: '#4b733d',
+  wild: '#1e2c1b',
+  rock: '#35382d',
+  block: '#252a22',
+  blockEdge: '#4b513d',
+  pond: '#0c2421',
+  pondEdge: '#35635a',
+  stream: '#17443c',
+  buildings: ['#30352b', '#3d4032', '#4c4938'],
+  buildingEdge: '#181d17',
+  landmarkFill: 'rgba(238, 205, 112, 0.08)',
+  landmarkEdge: 'rgba(238, 205, 112, 0.55)',
+  mainRoads: '#77745a',
+  highway: '#d29a38',
+  bridge: '#e1b04f',
+  route: '#e6c34c',
+  search: '#8de1c4',
+  halo: 'rgba(8, 12, 9, 0.92)'
 };
 
 // Landmarks modelled by landmarks.js on their real OpenStreetMap outlines (outlined on the map)

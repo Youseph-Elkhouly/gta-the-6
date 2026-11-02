@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="4" fill="#171514"/>
+  <rect x="3" y="3" width="58" height="58" rx="2" fill="none" stroke="#E5A443" stroke-width="3"/>
+  <text x="32" y="25" text-anchor="middle" fill="#E5A443" font-family="Impact, Haettenschweiler, sans-serif" font-size="17" letter-spacing="1">LTA</text>
+  <text x="32" y="52" text-anchor="middle" fill="#F4E9D5" font-family="Impact, Haettenschweiler, sans-serif" font-size="28">6</text>
+</svg>

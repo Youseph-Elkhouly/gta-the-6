@@ -20,6 +20,7 @@
   let starEl, healthEl, fillEl, wastedEl;
   let siren = null;
   let audioCtx = null;
+  let playerRag = null;
 
   const tmp = new THREE.Vector3();
   const q = new THREE.Quaternion();
@@ -77,6 +78,28 @@
     gain.connect(ctx.destination);
     osc.start(t);
     osc.stop(t + 0.05);
+  }
+
+  // Original game-over sting built from Web Audio rather than an external recording.
+  function wastedSting() {
+    const ctx = audio();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [196, 147, 98].forEach((frequency, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = now + i * 0.16;
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(frequency, start);
+      osc.frequency.exponentialRampToValueAtTime(frequency * 0.72, start + 0.14);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.12 - i * 0.02, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.17);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.18);
+    });
   }
 
   function sirenOn(on) {
@@ -201,6 +224,20 @@
     down = true;
     downLeft = 3.6;
     sirenOn(false);
+    const person = cm?.entities?.person;
+    if (person?.rig?.placed) {
+      person.rig.solve();
+      const source = officers.find((o) => o.alive) || officers[0];
+      const dx = source ? person.position.x - source.x : Math.sin(person.heading || 0);
+      const dz = source ? person.position.z - source.z : Math.cos(person.heading || 0);
+      const len = Math.hypot(dx, dz) || 1;
+      playerRag = new PersonRagdoll();
+      playerRag.start(person.rig, (dx / len) * 1.35, 0.9, (dz / len) * 1.35, (dx / len) * 0.22, (dz / len) * 0.22);
+      person.speed = 0;
+      person.combatAim = false;
+      person.aimShoulder = 0;
+    }
+    wastedSting();
     if (wastedEl) {
       wastedEl.hidden = false;
       wastedEl.classList.add('is-on');
@@ -231,7 +268,11 @@
     officers.length = 0;
     setStars(0);
     const person = cm?.entities?.person;
-    if (person) person.health = playerHp;
+    if (person) {
+      person.health = playerHp;
+      person.speed = 0;
+    }
+    playerRag = null;
     respawnSomewhere();
     if (wastedEl) {
       wastedEl.classList.remove('is-on');
@@ -298,6 +339,15 @@
     if (down) {
       downLeft -= dt;
       sirenOn(false);
+      const player = cm?.entities?.person;
+      if (player) {
+        player.speed = 0;
+        if (playerRag) {
+          const ground = (x, z) => cm.getGroundHeight?.(x, z, 'person', player.position.y) ?? player.position.y ?? 0;
+          playerRag.step(dt, ground, null);
+          playerRag.apply(player.rig);
+        }
+      }
       if (downLeft <= 0) clearDown();
       crowd.begin();
       crowd.end();

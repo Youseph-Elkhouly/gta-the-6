@@ -23,7 +23,7 @@
     root.setAttribute('aria-hidden', 'true');
     root.innerHTML = `
       <div class="phone-device">
-        <div class="phone-top-bezel"><svg class="phone-brand-mark" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.2 4.4C7.5 1.8 9.3.8 11.8 1c-.6 2-1.8 3.2-3.6 3.4ZM8 5.2C5.4 3.5 1.9 5.4 2 9.2c.1 3.4 2.2 6.8 4.6 6.8.7 0 1-.5 1.7-.5s1 .5 1.8.5c2.3 0 4.4-3.4 4.5-6.8.1-3.8-3.8-5.7-6.6-4Z"/></svg><span class="phone-device-brand">iFruit</span><i aria-hidden="true"></i></div>
+        <div class="phone-top-bezel"><svg class="phone-brand-mark" viewBox="0 0 16 16" aria-hidden="true"><text x="8" y="13" text-anchor="middle" fill="currentColor" font-family="Impact, sans-serif" font-size="15">6</text></svg><span class="phone-device-brand">THE 6</span><i aria-hidden="true"></i></div>
         <div class="phone-screen">
           <div class="phone-status"><span class="phone-signal" aria-label="Signal"><i></i><i></i><i></i><i></i></span><span class="phone-carrier-mark" aria-label="Carrier" aria-hidden="true">◕</span><span class="phone-day">Wed</span><span class="phone-clock">--:--</span><span class="phone-battery" aria-label="Battery full"><i></i><b></b></span></div>
           <div class="phone-service-band"><span>Home</span></div>
@@ -32,7 +32,7 @@
         </div>
         <nav class="phone-home-bar" aria-label="Phone shortcuts">
           <button class="phone-nav-search" type="button" aria-label="Search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.2"/><path d="m15 15 5 5"/></svg><span class="phone-nav-label">Search</span></button>
-          <button class="phone-nav-home" type="button" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-1-3 1-5 4-5-1 3-2 4-4 5Zm0 2c-2-2-7-1-7 4 0 5 3 9 6 9 1 0 1-1 2-1s1 1 2 1c3 0 6-4 6-9 0-5-5-6-9-4Z"/></svg><span class="phone-nav-label">Home</span></button>
+          <button class="phone-nav-home" type="button" aria-label="Home" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/></svg><span class="phone-nav-label">Home</span></button>
           <button class="phone-nav-back" type="button" aria-label="Back" title="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span class="phone-nav-label">Back</span></button>
         </nav>
       </div>`;

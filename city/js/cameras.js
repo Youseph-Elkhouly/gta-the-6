@@ -52,6 +52,7 @@ class CameraSystem {
     this.orbitYawOffset = 0.0;
     this.orbitPitchOffset = 0.09;
     this.zoomMultiplier = 1.0;
+    this.aimZoom = false;
     this.isDragging = false;
     this.userOrbitTimer = 0;
 
@@ -79,11 +80,39 @@ class CameraSystem {
     const canvas = this.domElement;
     const pointers = new Map();
     canvas.style.touchAction = 'none';
+    // The WebGL canvas fills the play area. Suppress the browser's image/canvas
+    // context menu here so right-button aiming can hold the zoom cleanly.
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button === 2 && !window.CITY.uiOverlay) {
+        e.preventDefault();
+        this.aimZoom = true;
+      }
+    });
+    const stopAimZoom = (e) => {
+      if (!e || e.button === 2 || e.type === 'blur' || e.type === 'pointercancel') this.aimZoom = false;
+    };
+    window.addEventListener('pointerup', stopAimZoom);
+    window.addEventListener('pointercancel', stopAimZoom);
+    window.addEventListener('blur', stopAimZoom);
 
     canvas.addEventListener('pointerdown', (e) => {
       if (window.CITY.uiOverlay) return;
+      if (e.pointerType === 'mouse') {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        // Mouse look is captured on click. Desktop mouse dragging is deliberately
+        // not used; touch keeps its drag and pinch gestures below.
+        if (canvas.requestPointerLock) {
+          try {
+            const lock = canvas.requestPointerLock();
+            lock?.catch?.(() => {});
+          } catch (_) {}
+        }
+        return;
+      }
       if (e.button !== 0 || pointers.size >= 2) return;
-      // Only two touch pointers may share a gesture; mouse and pen drags stay independent.
+      // Only touch pointers share drag/pinch gestures.
       if (pointers.size && (e.pointerType !== 'touch' || pointers.values().next().value.type !== 'touch')) return;
       e.preventDefault();
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
@@ -112,6 +141,24 @@ class CameraSystem {
         this.orbitYawOffset -= dx * 0.0065;
         this.orbitPitchOffset = Math.max(-0.32, Math.min(0.68, this.orbitPitchOffset + dy * 0.005));
       }
+      this.userOrbitTimer = 4.0;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (document.pointerLockElement !== canvas || window.CITY.uiOverlay) return;
+      const followLook = ['chase', 'action', 'pov'].includes(this.activePresetId);
+      const person = this.controllerManager.activeMode === 'person' && followLook
+        ? this.controllerManager.entities?.person : null;
+      if (person && !window.CITY.wanted?.isDown) {
+        // On foot, mouse yaw turns the character so the chase camera remains
+        // behind them. This avoids orbiting through the model on quick turns and
+        // keeps walking and pistol aim on the same heading.
+        person.heading -= e.movementX * 0.0028;
+        this.orbitYawOffset = 0;
+      } else {
+        this.orbitYawOffset -= e.movementX * 0.0028;
+      }
+      this.orbitPitchOffset = Math.max(-0.32, Math.min(0.68, this.orbitPitchOffset + e.movementY * 0.0025));
       this.userOrbitTimer = 4.0;
     });
 
@@ -212,11 +259,12 @@ class CameraSystem {
     const desiredPos = this._desiredPos;
     const desiredLook = this._desiredLook;
 
-    if (this.userOrbitTimer > 0 && !this.isDragging) {
+    const pointerLocked = document.pointerLockElement === this.domElement;
+    if (this.userOrbitTimer > 0 && !this.isDragging && !pointerLocked) {
       this.userOrbitTimer = Math.max(0, this.userOrbitTimer - dt);
     }
 
-    if (!this.isDragging && this.userOrbitTimer <= 0 && Math.abs(entity.speed) > 0.5) {
+    if (!this.isDragging && !pointerLocked && this.userOrbitTimer <= 0 && Math.abs(entity.speed) > 0.5) {
       this.orbitYawOffset -= Math.round(this.orbitYawOffset / (Math.PI * 2)) * (Math.PI * 2);
       this.orbitYawOffset += (0.0 - this.orbitYawOffset) * (1 - Math.exp(-dt * 2.2));
     }
@@ -231,7 +279,9 @@ class CameraSystem {
     switch (this.activePresetId) {
       case 'chase': {
         const aim = entity.aimShoulder || 0;
-        const dist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.82 : 1) * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
+        const aimZoom = entity.type === 'person' && this.aimZoom ? 0.58 : 1;
+        const followDist = entity.chaseDistance * this.zoomMultiplier * (aim ? 0.82 : 1) * aimZoom * (1 + Math.min(0.25, this.smoothedSpeed * 0.01));
+        const dist = entity.type === 'person' ? Math.max(3.4, followDist) : followDist;
         const height = entity.chaseHeight * this.zoomMultiplier + Math.sin(this.orbitPitchOffset) * dist * 0.85;
         const horizDist = Math.cos(this.orbitPitchOffset) * dist + speedLag;
 
@@ -396,7 +446,9 @@ class CameraSystem {
         this.followOffset.subVectors(this.currentPos, entity.position);
         this.followLookOffset.subVectors(this.currentLookAt, entity.position);
       }
-      const k = 1 - Math.exp(-dt * 8.5);
+      // Reposition the on-foot chase camera in the character's frame in one
+      // step. World-space easing across a sharp turn sends it through the player.
+      const k = entity.type === 'person' ? 1 : 1 - Math.exp(-dt * 8.5);
       this.followBaseY += (entity.position.y - this.followBaseY) * k;
       this.followOffset.lerp(desiredPos.sub(entity.position), k);
       this.followLookOffset.lerp(desiredLook.sub(entity.position), k);

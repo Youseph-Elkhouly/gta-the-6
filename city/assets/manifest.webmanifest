@@ -1,6 +1,6 @@
 {
-  "name": "GTA: The 6",
-  "short_name": "GTA: The 6",
+  "name": "Larp Theft Auto: The 6",
+  "short_name": "Larp Theft Auto",
   "description": "Downtown Toronto and the waterfront in 3D, in your browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge to the Distillery District.",
   "start_url": "../explore.html",
   "scope": "../",
@@ -8,6 +8,6 @@
   "background_color": "#07111d",
   "theme_color": "#07111d",
   "icons": [
-    { "src": "brand/gta6-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "brand/larp-theft-auto-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

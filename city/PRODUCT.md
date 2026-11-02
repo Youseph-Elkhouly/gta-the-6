@@ -17,7 +17,7 @@ Both usually arrive from a shared link or a post and decide within a few seconds
 
 ## Product Purpose
 
-GTA: The 6 is downtown Toronto and the waterfront in 3D, in the browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge along the lake to Sugar Beach, past the CN Tower and through downtown, and ride the 504 streetcar or the subway across the Don Valley.
+Larp Theft Auto: The 6 is downtown Toronto and the waterfront in 3D, in the browser: walk, cycle, drive or fly from the Humber Bay Arch Bridge along the lake to Sugar Beach, past the CN Tower and through downtown, and ride the 504 streetcar or the subway across the Don Valley.
 
 The landing page has one job: **get the visitor into the city.** Success is the visitor opening it, through Explore, the place search or a sight.
 
@@ -39,7 +39,7 @@ The city is built from the City of Toronto's own open data and OpenStreetMap at 
 
 ## Brand Commitments
 
-- Name: **GTA: The 6**. The landing page, in-game home control, map, and app icons use the GTA: The 6 mark in `assets/brand/gta6-mark.svg`.
+- Name: **Larp Theft Auto: The 6**. The landing page, in-game home control, map, and app icons use the Larp Theft Auto mark in `assets/brand/larp-theft-auto-mark.svg`.
 - **Every image on the page is the app itself.** Pictures of the city are real in-app screenshots, never outside renders, stock photography or generated imagery. The logo (`assets/brand/`, John's own) is a brand mark, not a picture, and is the one exception.
 
 ## Evidence on Hand

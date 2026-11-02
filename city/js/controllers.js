@@ -355,11 +355,12 @@ class ThirdPersonControllerManager {
     const person = this.entities.person;
     if (!person) return;
     if (person.mesh) person.mesh.visible = visible;
+    if (person.castActor) person.castActor.setVisible(visible);
     person._charHidden = !visible;
     if (person.crowd?.meshes) {
       // The skinned avatar is rendered by its own crowd meshes, outside PlayerPerson's root group. Hiding only the
       // root leaves a standing copy behind when the player enters a vehicle.
-      for (const mesh of person.crowd.meshes) mesh.visible = visible;
+      for (const mesh of person.crowd.meshes) mesh.visible = visible && !person.castActor?.ready;
     }
     if (!visible && person.crowd) {
       person.crowd.begin();
@@ -759,12 +760,23 @@ class ThirdPersonControllerManager {
 
     this.scene.add(root);
 
+    const castActor = window.CITY.cast?.create('cj', {
+      parent: root,
+      onReady: (actor) => {
+        // The procedural rig stays live as the gameplay/collision skeleton, but
+        // stops drawing as soon as the textured skinned model is available.
+        for (const mesh of crowd.meshes) mesh.visible = false;
+        actor.setVisible(this.activeMode === 'person' && !this.suspended);
+      }
+    }) || null;
+
     return {
       type: 'person',
       label: 'Pedestrian',
       mesh: root,
       crowd,
       rig,
+      castActor,
       position: new THREE.Vector3(SPAWN.x - Math.cos(SPAWN.heading) * 2.4, 0.0, SPAWN.z + Math.sin(SPAWN.heading) * 2.4),
       heading: SPAWN.heading,
       speed: 0,
@@ -1402,13 +1414,24 @@ class ThirdPersonControllerManager {
 
     const p = this.entities.person;
     if (this.activeMode === 'person' && !far(p)) {
+      const playerDown = !!window.CITY.wanted?.isDown;
       p._charHidden = false;
       const air = p.position.y - this.getGroundHeight(p.position.x, p.position.z, 'person', p.position.y);
       p.rig.update(dt, p.position.x, p.position.z, p.heading, personGround, this, air > 0.02 ? air : 0);
+      p.castActor?.setVisible(!playerDown);
+      if (!playerDown) {
+        p.castActor?.update(dt, {
+          speed: p.speed,
+          airborne: air > 0.02,
+          aiming: !!p.combatAim,
+          reloading: !!window.CITY.combat?.reloading
+        });
+      }
       p.crowd.begin();
-      p.crowd.add(p.rig, 0);
+      if (!p.castActor?.ready || playerDown) p.crowd.add(p.rig, 0);
       p.crowd.end();
     } else if (!p._charHidden) {
+      p.castActor?.setVisible(false);
       p.rig.placed = false; // (stands afresh where it is when the camera comes back)
       p.crowd.begin();
       p.crowd.end();
